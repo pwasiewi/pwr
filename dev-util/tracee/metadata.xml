@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		Tracee is a runtime security and observability tool that uses eBPF to
+		trace system events and detect suspicious behavior. This fork includes
+		patches for kernel >= 6.9 (libbpf v1.7.0 + CAP_SYS_ADMIN in eBPF ring).
+	</longdescription>
+	<upstream>
+		<remote-id type="github">aquasecurity/tracee</remote-id>
+	</upstream>
+</pkgmetadata>
