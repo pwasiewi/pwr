@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit go-module git-r3
+inherit go-module git-r3 systemd
 
 DESCRIPTION="eBPF-based Security and Observability tool for Linux (patched for kernel >=6.9)"
 HOMEPAGE="https://github.com/pwasiewi/tracee"
@@ -64,15 +64,33 @@ src_install() {
 	insinto /usr/share/tracee
 	doins dist/tracee.bpf.o
 
-	if use systemd && [[ -f contrib/packaging/tracee.service ]]; then
-		systemd_dounit contrib/packaging/tracee.service
+	# Systemd service files — dwa tryby (Conflicts= między sobą)
+	if use systemd; then
+		systemd_dounit "${FILESDIR}"/tracee.service
+		systemd_dounit "${FILESDIR}"/tracee-forensic.service
 	fi
+
+	# Policy YAML — tryb minimalny i śledczy
+	insinto /etc/tracee
+	doins "${FILESDIR}"/policy-minimal.yaml
+	doins "${FILESDIR}"/policy-forensic.yaml
+
+	# Logrotate — rotacja daily, 90 dni, sha256sum po rotacji
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}"/tracee.logrotate tracee
 
 	dodoc Readme.md
 }
 
 pkg_postinst() {
 	elog "Tracee wymaga BTF w kernelu (CONFIG_DEBUG_INFO_BTF=y)."
-	elog "Uruchomienie: sudo tracee --output json"
-	elog "Z obejściem capability: sudo tracee --capabilities bypass=true --output json"
+	elog ""
+	elog "Tryb minimalny (always-on, ~160 MB RAM):"
+	elog "  systemctl enable --now tracee"
+	elog ""
+	elog "Tryb śledczy (incident response, 1-3% CPU, 10-100 MB/dzień):"
+	elog "  systemctl stop tracee && systemctl start tracee-forensic"
+	elog ""
+	elog "Policy YAML: /etc/tracee/policy-{minimal,forensic}.yaml"
+	elog "Logi: /var/log/tracee/{detections,forensic}.json"
 }

@@ -1,0 +1,18 @@
+/var/log/tracee/detections.json
+/var/log/tracee/forensic.json
+{
+    daily
+    rotate 90
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    postrotate
+        # Podpisz rotowany plik sha256sum — dowód integralności dla sądu
+        YESTERDAY=$(date -d yesterday +%Y%m%d)
+        for f in /var/log/tracee/*.json."${YESTERDAY}"; do
+            [ -f "$f" ] && sha256sum "$f" >> /var/log/tracee/SHA256SUMS
+        done
+    endscript
+}

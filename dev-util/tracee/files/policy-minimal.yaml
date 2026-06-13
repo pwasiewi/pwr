@@ -1,0 +1,47 @@
+apiVersion: tracee.aquasec.com/v1beta1
+kind: Policy
+metadata:
+  name: minimal-security
+  annotations:
+    description: >
+      Wyłącznie alerty sygnatur bezpieczeństwa — zero surowego strumienia zdarzeń.
+      eBPF hooki aktywne w kernelu, do userspace trafia tylko wystrzelony alert.
+      Obciążenie: <0.5% CPU, ~150 MB RAM. Log: 0–50 wpisów/dzień na czystym systemie.
+spec:
+  scope:
+    - global
+  defaultActions:
+    - log
+  rules:
+    # === CRITICAL — rootkit, hook syscall/proc ===
+    - event: hooked_syscall_detector     # DRV-002 rootkit modyfikuje tablicę syscalli
+    - event: hooked_seq_ops_detector     # DRV-003 rootkit hookuje seq_ops /proc
+    - event: proc_fops_hooking           # TRC-1020 hook operacji na /proc
+
+    # === HIGH — injekcja kodu, eskalacja, persistence ===
+    - event: ptrace_code_injection       # TRC-103 injekcja przez ptrace
+    - event: proc_mem_code_injection     # TRC-1024 injekcja przez /proc/<pid>/mem
+    - event: proc_mem_access             # TRC-1023 nieautoriz. odczyt /proc/<pid>/mem
+    - event: process_vm_write_inject     # TRC-1025 injekcja przez process_vm_writev
+    - event: stdio_over_socket           # TRC-101 reverse shell (stdin/stdout → socket)
+    - event: fileless_execution          # TRC-105 execveat() z memfd (bezplikowe)
+    - event: core_pattern_modification   # TRC-1011 persistence przez /proc/sys/kernel/core_pattern
+    - event: default_loader_mod          # TRC-1012 modyfikacja /etc/ld.so.preload (persistence)
+    - event: disk_mount                  # TRC-1014 nieautoryzowany mount
+    - event: illegitimate_shell          # TRC-1016 shell spawn z webservera/usługi sieciowej
+    - event: cgroup_notify_on_release    # TRC-106 ucieczka z kontenera przez cgroup
+    - event: cgroup_release_agent        # TRC-1010 ucieczka z kontenera (release_agent)
+    - event: system_request_key_mod      # TRC-1031 modyfikacja /proc/sysrq-trigger
+    - event: syscall_hooking             # TRC-1030 hook syscall z przestrzeni użytkownika
+
+    # === MEDIUM — persistence, privilege escalation, obfuscation ===
+    - event: dynamic_code_loading        # TRC-104 shellcode RWX (mmap+exec)
+    - event: dropped_executable          # TRC-1022 wgranie binarki na dysk
+    - event: hidden_file_created         # TRC-1015 tworzenie pliku z kropką (ukrycie)
+    - event: kernel_module_loading       # TRC-1017 ładowanie modułu jądra
+    - event: proc_kcore_read             # TRC-1021 odczyt pamięci przez /proc/kcore
+    - event: scheduled_task_mod          # TRC-1027 modyfikacja crona (persistence)
+    - event: sudoers_modification        # TRC-1028 modyfikacja sudoers (eskalacja)
+    - event: ld_preload                  # TRC-107 LD_PRELOAD inject (częściowe: /etc/ld.so.preload)
+    - event: rcd_modification            # TRC-1026 modyfikacja rc.d (persistence)
+    - event: docker_abuse                # TRC-1019 nadużycie Docker socket

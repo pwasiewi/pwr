@@ -1,0 +1,26 @@
+[Unit]
+Description=Tracee eBPF Runtime Security Monitor (tryb minimalny)
+Documentation=https://aquasecurity.github.io/tracee/
+After=local-fs.target
+# Tryb śledczy jest osobną usługą — nie mogą działać jednocześnie
+Conflicts=tracee-forensic.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/mkdir -p /var/log/tracee
+ExecStart=/usr/bin/tracee \
+  --policy /etc/tracee/policy-minimal.yaml \
+  --output json:/var/log/tracee/detections.json \
+  --logging level=warn
+
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+
+# Tracee potrzebuje roota i pełnych CAP_BPF/CAP_SYS_ADMIN
+User=root
+NoNewPrivileges=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

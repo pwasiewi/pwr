@@ -1,0 +1,75 @@
+apiVersion: tracee.aquasec.com/v1beta1
+kind: Policy
+metadata:
+  name: forensic-investigation
+  annotations:
+    description: >
+      Ślad sądowy: alerty sygnatur + surowe zdarzenia kluczowe dla informatyki śledczej.
+      Rejestruje każde uruchomienie procesu (argv+env), każde połączenie sieciowe,
+      operacje ptrace/module_load/memfd/process_vm_writev.
+      Obciążenie: 1–3% CPU, ~200 MB RAM. Log: 10–100 MB/dzień.
+      Aktywować gdy: dochodzenie, incident response, audit compliance.
+spec:
+  scope:
+    - global
+  defaultActions:
+    - log
+  rules:
+    # === CRITICAL ===
+    - event: hooked_syscall_detector
+    - event: hooked_seq_ops_detector
+    - event: proc_fops_hooking
+
+    # === HIGH ===
+    - event: ptrace_code_injection
+    - event: proc_mem_code_injection
+    - event: proc_mem_access
+    - event: process_vm_write_inject
+    - event: stdio_over_socket
+    - event: fileless_execution
+    - event: core_pattern_modification
+    - event: default_loader_mod
+    - event: disk_mount
+    - event: illegitimate_shell
+    - event: cgroup_notify_on_release
+    - event: cgroup_release_agent
+    - event: system_request_key_mod
+    - event: syscall_hooking
+
+    # === MEDIUM ===
+    - event: dynamic_code_loading
+    - event: dropped_executable
+    - event: hidden_file_created
+    - event: kernel_module_loading
+    - event: proc_kcore_read
+    - event: scheduled_task_mod
+    - event: sudoers_modification
+    - event: ld_preload              # pełna detekcja z enrichment=environment
+    - event: rcd_modification
+    - event: docker_abuse
+
+    # === SUROWE ZDARZENIA — ślad dowodowy ===
+
+    # Każde uruchomienie procesu: argv, env, ppid, uid, cwd
+    # Wartość: rekonstrukcja osi czasu ataku, łańcucha procesów, persistence
+    - event: sched_process_exec
+
+    # Każde wychodzące połączenie TCP/UDP: IP:port, pid, comm
+    # Wartość: identyfikacja C2, kanałów eksfiltracji, lateral movement
+    - event: security_socket_connect
+
+    # Operacje ptrace (poza detektorami): PTRACE_ATTACH, PTRACE_PEEKDATA itp.
+    # Wartość: dokumentacja injekcji krok po kroku, anti-analysis tools
+    - event: ptrace
+
+    # Ładowanie modułów jądra (surowe): nazwa, path, fingerprint
+    # Wartość: dowód instalacji rootkita nawet jeśli detektor nie wystrzelił
+    - event: module_load
+
+    # Tworzenie anonimowej pamięci: nazwa memfd, pid, comm
+    # Wartość: prep fileless execution — wartościowe nawet bez execveat
+    - event: memfd_create
+
+    # Zapis do pamięci innego procesu: target PID, rozmiar
+    # Wartość: dokumentacja injekcji kodu gdy proces cel już nie żyje
+    - event: process_vm_writev
