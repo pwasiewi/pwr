@@ -5,10 +5,12 @@ EAPI=8
 
 inherit go-module git-r3 systemd
 
-DESCRIPTION="eBPF-based Security and Observability tool for Linux (patched for kernel >=6.9)"
-HOMEPAGE="https://github.com/pwasiewi/tracee"
+DESCRIPTION="eBPF-based Security and Observability tool for Linux (test PR #5337 fix dla kernel >=6.9)"
+HOMEPAGE="https://github.com/aquasecurity/tracee"
 
-EGIT_REPO_URI="https://github.com/pwasiewi/tracee.git"
+# PR #5337 (geyslan): unika BTF_GET_FD_BY_ID przy tworzeniu inner map (issue #5330)
+EGIT_REPO_URI="https://github.com/geyslan/tracee.git"
+EGIT_BRANCH="use-available-btf-fd"
 # libbpf submodule dostarczamy jako tarball w SRC_URI — nie przez git-r3
 
 LIBBPF_PV="1.7.0"
