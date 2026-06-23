@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    CodeQL is GitHub's semantic code analysis engine. It lets you query code
+    as though it were data. This package provides the prebuilt CLI binary
+    with bundled extractors and query packs for all supported languages
+    (C/C++, C#, Go, Java/Kotlin, JavaScript/TypeScript, Python, Ruby, Rust, Swift).
+  </longdescription>
+  <upstream>
+    <remote-id type="github">github/codeql-cli-binaries</remote-id>
+  </upstream>
+</pkgmetadata>
