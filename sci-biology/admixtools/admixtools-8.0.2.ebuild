@@ -23,12 +23,6 @@ RDEPEND="
 	eigensoft? ( sci-biology/eigensoft )
 "
 
-# Jeśli eigensoft nie jest zainstalowany, nasze convertf/mergeit będą jedyne.
-# Jeśli jest - pomijamy je żeby uniknąć konfliktu plików.
-RDEPEND+="
-	!eigensoft? ( !sci-biology/eigensoft )
-"
-
 src_prepare() {
 	cd src || die
 	# Usuwamy flagi profilowania/debug; dodajemy -std=gnu17 bo GCC 15 traktuje
