@@ -12,16 +12,11 @@ LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 
-IUSE="eigensoft"
-
 DEPEND="
 	sci-libs/gsl
 	|| ( sci-libs/flexiblas sci-libs/openblas )
 "
-RDEPEND="
-	${DEPEND}
-	eigensoft? ( sci-biology/eigensoft )
-"
+RDEPEND="${DEPEND}"
 
 src_prepare() {
 	cd src || die
@@ -51,14 +46,11 @@ src_install() {
 	)
 	dobin "${qptools[@]}"
 
-	# Narzędzia pomocnicze (bez convertf/mergeit gdy eigensoft jest zainstalowany)
+	# Narzędzia pomocnicze
+	# convertf i mergeit celowo pominięte — dostarcza sci-biology/eigensoft
 	local helpers=( snpunion simpjack2 grabpars easystats easycheck easylite
 		multimerge geno_single transpose merge_transpose nickhash )
 	dobin "${helpers[@]}"
-
-	if ! use eigensoft; then
-		dobin convertf mergeit
-	fi
 
 	# Skrypty perl/R z perlsrc/
 	cd .. || die
@@ -84,12 +76,8 @@ pkg_postinst() {
 	elog "Zainstalowane programy: qpAdm, qpGraph, qpWave, qp3Pop, qpDstat,"
 	elog "qpF4ratio, qpBound, qpff3base, qpfstats i inne."
 	elog ""
-	if use eigensoft; then
-		elog "USE=eigensoft: convertf i mergeit dostarczane przez sci-biology/eigensoft."
-	else
-		elog "convertf i mergeit zainstalowane z tego pakietu (v${PV})."
-		elog "Dla smartpca zainstaluj sci-biology/eigensoft."
-	fi
+	elog "convertf i mergeit: dostarczane przez sci-biology/eigensoft."
+	elog "smartpca: dostarczane przez sci-biology/eigensoft."
 	elog ""
 	elog "Tablice D-statystyk: /usr/share/admixtools/twtable"
 }

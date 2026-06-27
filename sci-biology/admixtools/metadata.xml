@@ -9,12 +9,8 @@
 		ADMIXTOOLS implements D-statistics and related methods for testing admixture
 		(Patterson et al. 2012). Key programs: qpAdm (admixture proportions),
 		qpGraph (admixture graph fitting), qpWave, qp3Pop, qpDstat (D-statistics).
+		convertf and mergeit are provided by sci-biology/eigensoft.
 	</longdescription>
-	<use>
-		<flag name="eigensoft">
-			Skip installing convertf and mergeit (provided by sci-biology/eigensoft).
-		</flag>
-	</use>
 	<upstream>
 		<remote-id type="github">DReichLab/AdmixTools</remote-id>
 	</upstream>
