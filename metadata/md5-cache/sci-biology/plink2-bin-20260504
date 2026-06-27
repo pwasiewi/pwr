@@ -1,0 +1,12 @@
+BDEPEND=app-arch/unzip
+DEFINED_PHASES=install postinst
+DESCRIPTION=Whole genome association analysis toolset, plink2 prebuilt binary (alpha7)
+EAPI=8
+HOMEPAGE=https://www.cog-genomics.org/plink/2.0/
+IUSE=+avx2
+KEYWORDS=-* ~amd64
+LICENSE=GPL-3 Intel-ISSL
+RESTRICT=bindist mirror strip
+SLOT=0
+SRC_URI=avx2? ( https://s3.amazonaws.com/plink2-assets/alpha7/plink2_linux_avx2_20260504.zip -> plink2-bin-20260504-avx2.zip ) !avx2? ( https://s3.amazonaws.com/plink2-assets/alpha7/plink2_linux_x86_64_20260504.zip -> plink2-bin-20260504-x86_64.zip )
+_md5_=399b843a1855e740ba96d5767958dba8

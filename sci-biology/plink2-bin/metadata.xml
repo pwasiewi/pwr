@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		PLINK 2.0 is a whole genome association analysis toolset for large-scale
+		genomic data. This package provides the official prebuilt binary from
+		the alpha7 release series. Includes plink2 (main tool) and vcf_subset.
+		The binary contains statically linked Intel math routines under Intel ISSL.
+	</longdescription>
+	<use>
+		<flag name="avx2">Use AVX2-optimized binary (requires Haswell/Zen 2 or newer CPU)</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">chrchang/plink-ng</remote-id>
+	</upstream>
+</pkgmetadata>
