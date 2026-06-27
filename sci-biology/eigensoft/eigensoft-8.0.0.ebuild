@@ -50,6 +50,6 @@ pkg_postinst() {
 	elog "Dokumentacja: /usr/share/doc/${PF}/"
 	elog "Przykłady: POPGEN/, CONVERTF/, EIGENSTRAT/ w źródłach"
 	elog ""
-	elog "Uwaga: jeśli masz zainstalowane admixtools, oba pakiety"
-	elog "dostarczają convertf i mergeit — zainstaluj tylko jeden z nich."
+	elog "Można zainstalować razem z sci-biology/admixtools — convertf/mergeit"
+	elog "będą dostarczane wyłącznie przez ten pakiet (admixtools ich nie instaluje)."
 }
