@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		PLINK 1.9 whole genome association analysis toolset.
+		Built from current plink-ng GitHub source (master branch).
+		Installed as p-link to avoid collision with net-misc/putty.
+		Used in AADR/qpAdm pipeline for --bmerge of personal genome
+		with ancient DNA reference panels (plink2 lacks non-concatenating merge).
+	</longdescription>
+</pkgmetadata>
