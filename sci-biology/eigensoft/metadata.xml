@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		EIGENSOFT implements PCA-based population structure analysis (Patterson et al. 2006)
+		and EIGENSTRAT stratification correction (Price et al. 2006).
+		Key programs: smartpca (PCA), convertf (format conversion), mergeit (dataset merging).
+	</longdescription>
+	<upstream>
+		<remote-id type="github">DReichLab/EIG</remote-id>
+	</upstream>
+</pkgmetadata>
