@@ -1,0 +1,14 @@
+BDEPEND=>=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile configure install prepare unpack
+DEPEND=!static? ( sys-libs/zlib:= lz4? ( app-arch/lz4:= ) lzma? ( app-arch/xz-utils:= ) lzo? ( dev-libs/lzo:= ) xattr? ( sys-apps/attr:= ) xz? ( app-arch/xz-utils:= ) zstd? ( >=app-arch/zstd-1.0:= ) ) static? ( sys-libs/zlib:=[static-libs(+)] lz4? ( app-arch/lz4:=[static-libs(+)] ) lzma? ( app-arch/xz-utils:=[static-libs(+)] ) lzo? ( dev-libs/lzo:=[static-libs(+)] ) xattr? ( sys-apps/attr:=[static-libs(+)] ) xz? ( app-arch/xz-utils:=[static-libs(+)] ) zstd? ( >=app-arch/zstd-1.0:=[static-libs(+)] ) )
+DESCRIPTION=Tool for creating compressed filesystem type squashfs
+EAPI=9
+HOMEPAGE=https://github.com/plougher/squashfs-tools/
+INHERIT=flag-o-matic toolchain-funcs git-r3
+IUSE=debug lz4 lzma lzo static xattr +xz +zstd
+LICENSE=GPL-2
+PROPERTIES=live live
+RDEPEND=!static? ( sys-libs/zlib:= lz4? ( app-arch/lz4:= ) lzma? ( app-arch/xz-utils:= ) lzo? ( dev-libs/lzo:= ) xattr? ( sys-apps/attr:= ) xz? ( app-arch/xz-utils:= ) zstd? ( >=app-arch/zstd-1.0:= ) )
+SLOT=0
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	git-r3	2f8cdb10b033f92c3136aa6488a31c98
+_md5_=fc28dd251cf2a6871ba20b1784af3365
