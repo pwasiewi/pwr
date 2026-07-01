@@ -14,7 +14,7 @@ IUSE="debug lz4 lzma lzo static xattr +xz +zstd"
 case ${PV} in
 *9999)
 	PROPERTIES="live"
-	EGIT_REPO_URI="file:///home/pwas/Claude/testons/squashfs-tools"
+	EGIT_REPO_URI="https://github.com/plougher/squashfs-tools.git"
 	inherit git-r3
 	SRC_URI=""
 	KEYWORDS=""
