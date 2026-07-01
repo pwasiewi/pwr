@@ -1,0 +1,14 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=compile install postinst prepare
+DEPEND=virtual/zlib:= || ( sci-libs/flexiblas sci-libs/openblas )
+DESCRIPTION=Whole genome association analysis toolset, plink 1.9
+EAPI=8
+HOMEPAGE=https://www.cog-genomics.org/plink/1.9/
+INHERIT=toolchain-funcs
+KEYWORDS=~amd64
+LICENSE=GPL-3
+RDEPEND=virtual/zlib:= || ( sci-libs/flexiblas sci-libs/openblas )
+SLOT=0
+SRC_URI=https://github.com/chrchang/plink-ng/archive/a81e38220b16e3907bdcedbe6ce39b273e001e13.tar.gz -> plink-1.90_p20260606.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=1cfe3899d95f3f2597299de98b6d6924
