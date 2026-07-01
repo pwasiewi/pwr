@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>iohann.s.titov@gmail.com</email>
+    <name>Ivan S. Titov</name>
+  </maintainer>
+  <longdescription lang="en">
+    vLLM is a fast and easy-to-use library for LLM inference and
+    serving, with a Python API and an OpenAI-compatible HTTP server.
+    USE=cpu/cuda/rocm pick a mutually-exclusive VLLM_TARGET_DEVICE;
+    with none set the build is device-agnostic (API surface only).
+  </longdescription>
+  <use>
+    <flag name="cpu">Build for CPU inference (VLLM_TARGET_DEVICE=cpu); pull torchaudio + numba</flag>
+    <flag name="humming">Pull dev-python/humming-kernels for the optional CUDA-only "humming" MXFP4 quantization backend (needs USE=cuda)</flag>
+    <flag name="rocm">Build for AMD ROCm inference (VLLM_TARGET_DEVICE=rocm); pull HIP libs + torch{audio,vision}</flag>
+    <flag name="rust">Build the optional vllm-rs Rust serving frontend (opt-in at runtime via VLLM_USE_RUST_FRONTEND=1)</flag>
+  </use>
+  <upstream>
+    <remote-id type="pypi">vllm</remote-id>
+    <remote-id type="github">vllm-project/vllm</remote-id>
+    <bugs-to>https://github.com/vllm-project/vllm/issues</bugs-to>
+  </upstream>
+</pkgmetadata>
