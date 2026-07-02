@@ -154,7 +154,6 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-2.8.0-unbundle_pocketfft.patch.xz
 	"${FILESDIR}"/${PN}-2.5.1-cudnn_include_fix.patch.xz
 	"${FILESDIR}"/${PN}-2.4.0-cpp-httplib.patch.xz
-	"${FILESDIR}"/${PN}-2.5.1-glog-0.6.0.patch.xz
 	"${FILESDIR}"/${PN}-2.7.0-glog-0.7.1.patch.xz
 	"${FILESDIR}"/${PN}-2.12.0-aotriton-fixes.patch.xz
 	"${FILESDIR}"/${PN}-2.8.0-rocm-minus-flash.patch.xz
@@ -196,16 +195,36 @@ src_prepare() {
 	done
 
 	if use cuda && ( use flash || use memefficient ); then
-		mv "${WORKDIR}"/${FLASH_P}/* third_party/${FLASH_PN}/ || die
+		# git-r3 already checked out the flash-attention submodule; replace it
+		# with the pinned tarball version the ebuild specifies
+		rm -rf third_party/${FLASH_PN} || die
+		mv "${WORKDIR}"/${FLASH_P} third_party/${FLASH_PN} || die
 	fi
 	filter-lto #bug 862672
 
-	# Unbundle fmt
+	# Unbundle fmt — remove link suffix and any target_compile_definitions on
+	# the (now-absent) bundled fmt/fmt-header-only targets (git HEAD 2.14+ adds these)
 	sed -i \
 		-e 's|::fmt-header-only||' \
+		-e '/target_compile_definitions(fmt[- ]/d' \
+		-e '/target_compile_definitions(fmt-header-only/d' \
 		c10/CMakeLists.txt \
 		cmake/Dependencies.cmake \
 		torch/CMakeLists.txt \
+		|| die
+
+	# wrap_headers.py (2.14+): called with TORCH_INSTALL_INCLUDE_DIR="include" which
+	# expands to /usr/include (all system headers), violating Portage sandbox.
+	# The TORCH_STABLE_ONLY guards it adds are not needed at runtime.
+	: > tools/wrap_headers.py || die
+
+	# glog 0.6.0: IsGoogleLoggingInitialized is google:: not glog_internal_namespace_::
+	# Both Logging.cpp and Exception.cpp (added in 2.13+) need this fix
+	sed -i \
+		-e '/^namespace glog_internal_namespace_ {$/{N;N;d}' \
+		-e 's|::google::glog_internal_namespace_::IsGoogleLoggingInitialized()|::google::IsGoogleLoggingInitialized()|g' \
+		c10/util/Exception.cpp \
+		c10/util/Logging.cpp \
 		|| die
 
 	# tensorpipe is in system, not a build target of caffe2
