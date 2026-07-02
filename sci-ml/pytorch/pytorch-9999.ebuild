@@ -7,25 +7,30 @@ DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{11..14} )
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_EXT=1
-inherit distutils-r1 prefix
+inherit distutils-r1 git-r3 prefix
 
-DESCRIPTION="Tensors and Dynamic neural networks in Python"
+DESCRIPTION="Tensors and Dynamic neural networks in Python (live)"
 HOMEPAGE="https://pytorch.org/"
-SRC_URI="https://github.com/pytorch/${PN}/archive/refs/tags/v${PV}.tar.gz
-	-> ${P}.tar.gz"
+EGIT_REPO_URI="https://github.com/pytorch/${PN}.git"
+EGIT_BRANCH="main"
+EGIT_CHECKOUT_DIR="${WORKDIR}/${PN}"
+S="${WORKDIR}/${PN}"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS=""
+PROPERTIES="live"
 RESTRICT="test"
 
 REQUIRED_USE=${PYTHON_REQUIRED_USE}
-# ABI lock-step: pin the exact caffe2 tag that built the cached libtorch.
-# Do NOT accept caffe2-9999 here — HEAD libtorch would mismatch the 2.12.1
-# python bindings' C++ ABI.  For a HEAD stack use pytorch-9999 + caffe2-9999.
+
+# ABI lock-step: the python bindings link against the libtorch that caffe2
+# built and cached in /var/lib/caffe2/CMakeCache.txt.  A live frontend built
+# from git HEAD MUST pair with caffe2-9999 (same HEAD) — a stable caffe2 tag
+# would produce a C++ ABI mismatch.  Hence the exact ~9999 pin (no || floor).
 RDEPEND="
 	${PYTHON_DEPS}
-	~sci-ml/caffe2-${PV}[${PYTHON_SINGLE_USEDEP}]
+	~sci-ml/caffe2-9999[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		dev-python/sympy[${PYTHON_USEDEP}]
 		dev-python/typing-extensions[${PYTHON_USEDEP}]
@@ -37,17 +42,23 @@ DEPEND="${RDEPEND}
 	')
 "
 
+# Version-prefixed patches track the latest stable base; if a HEAD bump breaks
+# them, refresh the patch (and bump the prefix) — same policy as caffe2-9999.
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.9.0-dontbuildagain.patch
 	"${FILESDIR}"/${PN}-2.10.0-cpp-extension-multilib.patch
 )
+
+src_unpack() {
+	git-r3_src_unpack
+}
 
 src_prepare() {
 	# Replace placeholders added by cpp-extension.patch
 	sed -e "s|%LIB_DIR%|$(get_libdir)|g" \
 		-i torch/utils/cpp_extension.py || die
 
-	# Set build dir for pytorch's setup
+	# Set build dir for pytorch's setup — reuse caffe2's cmake cache
 	sed -e "/BUILD_DIR/s|build|/var/lib/caffe2/|" \
 		-i tools/setup_helpers/env.py || die
 
