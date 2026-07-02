@@ -658,7 +658,7 @@ inherit cargo distutils-r1 pypi rocm toolchain-funcs
 # Pre-staged so we can patch out FA3's unconditional-build quirk before
 # vllm's CMake FetchContent reaches it.  Bump in lockstep with vllm
 # bumps that change the pin.
-VLLM_FA_COMMIT="dd62dac706b1cf7895bd99b18c6cb7e7e117ee25"
+VLLM_FA_COMMIT="803020a8fa15407871341d41eba4919ade2ee1ee"
 
 DESCRIPTION="High-throughput, memory-efficient inference and serving engine for LLMs"
 HOMEPAGE="
@@ -907,14 +907,14 @@ RDEPEND="
 		>=dev-python/opentelemetry-semantic-conventions-ai-0.4.1[${PYTHON_USEDEP}]
 	')
 	cpu? (
-		>=sci-ml/caffe2-2.11.0-r90
+		|| ( >=sci-ml/caffe2-2.11.0-r90 ~sci-ml/caffe2-9999 )
 		~sci-ml/torchaudio-2.11.0
 		$(python_gen_cond_dep '
 			>=dev-python/numba-0.65.0[${PYTHON_USEDEP}]
 		')
 	)
 	cuda? (
-		>=sci-ml/caffe2-2.11.0-r90
+		|| ( >=sci-ml/caffe2-2.11.0-r90 ~sci-ml/caffe2-9999 )
 		~sci-ml/torchaudio-2.11.0
 		~sci-ml/torchvision-0.26.0[${PYTHON_SINGLE_USEDEP}]
 		~dev-python/flashinfer-python-0.6.12[${PYTHON_SINGLE_USEDEP}]
@@ -930,7 +930,7 @@ RDEPEND="
 		dev-util/nvidia-cuda-toolkit:=
 	)
 	rocm? (
-		>=sci-ml/caffe2-2.11.0-r90
+		|| ( >=sci-ml/caffe2-2.11.0-r90 ~sci-ml/caffe2-9999 )
 		~sci-ml/torchaudio-2.11.0
 		~sci-ml/torchvision-0.26.0[${PYTHON_SINGLE_USEDEP}]
 		>=dev-python/runai-model-streamer-bin-0.15.7[${PYTHON_SINGLE_USEDEP}]
@@ -1018,7 +1018,9 @@ src_unpack() {
 	fi
 }
 
-PATCHES=( "${FILESDIR}/${P}-humming-import-optional.patch" )
+# No humming patch needed: vllm 0.24.0 ships vllm/utils/humming.py — a lazy
+# facade that defers `import humming` until first use (upstream fix for the
+# unconditional import that required the patch in 0.22.x/0.23.x).
 
 src_prepare() {
 	distutils-r1_src_prepare
