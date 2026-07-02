@@ -5,15 +5,20 @@ EAPI=8
 
 inherit go-module git-r3 systemd
 
-DESCRIPTION="eBPF-based Security and Observability tool for Linux (test PR #5337 fix dla kernel >=6.9)"
+DESCRIPTION="eBPF-based Security and Observability tool for Linux"
 HOMEPAGE="https://github.com/aquasecurity/tracee"
 
-# PR #5337 (geyslan): unika BTF_GET_FD_BY_ID przy tworzeniu inner map (issue #5330)
-EGIT_REPO_URI="https://github.com/geyslan/tracee.git"
-EGIT_BRANCH="use-available-btf-fd"
+EGIT_REPO_URI="https://github.com/aquasecurity/tracee.git"
 # libbpf submodule dostarczamy jako tarball w SRC_URI — nie przez git-r3
 
 LIBBPF_PV="1.7.0"
+# geyslan/libbpfgo adds m.BTFFD() needed for kernel ≥6.9 fix (issue #5330, PR #5337)
+LIBBPFGO_PKG="github.com/geyslan/libbpfgo"
+LIBBPFGO_VER="v0.1.2-0.20260617155751-5e7cdf434a37"
+LIBBPFGO_REPLACE="${LIBBPFGO_PKG} ${LIBBPFGO_VER}"
+# go.sum hashes from PR #5337 go.sum diff
+LIBBPFGO_H1="h1:g6PFYBi41ITOfkpO5xEaQuUphfrFf3UqmP76ZqRSmMo="
+LIBBPFGO_GOMOD_H1="h1:veHe4u3xEpl0TBV+wX0AFJWOsnteNPOhNklRbYf3d+k="
 
 SRC_URI="https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_PV}.tar.gz
 	-> libbpf-${LIBBPF_PV}.tar.gz"
@@ -45,6 +50,21 @@ src_unpack() {
 		--strip-components=1 \
 		-C "${S}/3rdparty/libbpf" || die
 
+	# Redirect aquasecurity/libbpfgo → geyslan/libbpfgo which adds m.BTFFD().
+	# BTF_GET_FD_BY_ID requires CAP_SYS_ADMIN in kernel ≥6.9; m.BTFFD() avoids
+	# the syscall entirely by reusing the already-open BPF module fd.
+	sed -i '/replace github\.com\/aquasecurity\/libbpfgo/d' "${S}/go.mod" || die
+	echo "replace github.com/aquasecurity/libbpfgo => ${LIBBPFGO_REPLACE}" \
+		>> "${S}/go.mod" || die
+
+	# go.sum must be updated before go mod vendor: remove old aquasecurity/libbpfgo
+	# hashes and add geyslan/libbpfgo hashes (from PR #5337 go.sum diff).
+	sed -i '/^github\.com\/aquasecurity\/libbpfgo /d' "${S}/go.sum" || die
+	printf '%s\n' \
+		"${LIBBPFGO_PKG} ${LIBBPFGO_VER} ${LIBBPFGO_H1}" \
+		"${LIBBPFGO_PKG} ${LIBBPFGO_VER}/go.mod ${LIBBPFGO_GOMOD_H1}" \
+		>> "${S}/go.sum" || die
+
 	go-module_live_vendor
 }
 
@@ -52,6 +72,12 @@ src_prepare() {
 	# Makefile wywołuje 'git submodule update --init 3rdparty/libbpf' w fazie kompilacji,
 	# ale libbpf jest już rozpakowane z tarballa — usuwamy te wywołania
 	sed -i '/git submodule/d' Makefile || die
+
+	# PR #5337 (geyslan, kernel ≥6.9): zamień GetBTFFDByID (wymaga CAP_SYS_ADMIN)
+	# na m.BTFFD() (używa już otwartego fd BPF modułu, bez dodatkowych uprawnień)
+	sed -i 's|bpf\.GetBTFFDByID(info\.BTFID)|m.BTFFD()|g' \
+		pkg/policy/ebpf.go || die
+
 	default
 }
 
