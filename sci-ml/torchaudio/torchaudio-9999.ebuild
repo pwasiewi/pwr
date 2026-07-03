@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{12..14} )
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_EXT=1
-inherit distutils-r1 git-r3 multiprocessing
+inherit distutils-r1 flag-o-matic git-r3 multiprocessing
 
 DESCRIPTION="Audio data, transforms and models for PyTorch (live)"
 HOMEPAGE="https://github.com/pytorch/audio"
