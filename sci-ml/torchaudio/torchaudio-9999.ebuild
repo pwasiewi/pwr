@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{12..14} )
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_EXT=1
-inherit distutils-r1 flag-o-matic git-r3 multiprocessing
+inherit distutils-r1 git-r3 multiprocessing
 
 DESCRIPTION="Audio data, transforms and models for PyTorch (live)"
 HOMEPAGE="https://github.com/pytorch/audio"
@@ -49,7 +49,11 @@ python_compile() {
 
 	# Strip linker flags that leaked into CXXFLAGS so the C++ extension build
 	# doesn't choke on -Wl,* (see torchvision-9999 for the nvcc variant).
-	filter-flags '-Wl,*'
+	# filter-flags doesn't reliably drop these comma-glob tokens; sed does.
+	local _fvar
+	for _fvar in CFLAGS CXXFLAGS CPPFLAGS; do
+		export ${_fvar}="$(sed 's/-Wl,[^ ]*//g' <<<"${!_fvar}")"
+	done
 
 	MAX_JOBS="$(get_makeopts_jobs)" \
 		distutils-r1_python_compile -j1

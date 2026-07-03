@@ -8,7 +8,7 @@ DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_EXT=1
 ROCM_SKIP_GLOBALS=1
-inherit cuda distutils-r1 flag-o-matic git-r3 multiprocessing rocm
+inherit cuda distutils-r1 git-r3 multiprocessing rocm
 
 DESCRIPTION="Datasets, transforms and models to specific to computer vision (live)"
 HOMEPAGE="https://github.com/pytorch/vision"
@@ -65,12 +65,17 @@ python_compile() {
 	# bug #968112
 	addpredict /dev/random
 
-	# torch.cpp_extension feeds CXXFLAGS verbatim to nvcc, which forwards them
+	# torch.cpp_extension feeds $CXXFLAGS verbatim to nvcc, which forwards them
 	# to host gcc as COMPILE flags. Linker flags that leaked into CXXFLAGS
 	# (-Wl,-O1 -Wl,--as-needed -Wl,-z,pack-relative-relocs) then abort the CUDA
-	# kernel build with `gcc: unrecognized command-line option '-Wl'`. Strip
-	# them here (cmake-based caffe2 is immune; this ninja/nvcc path is not).
-	filter-flags '-Wl,*'
+	# kernel build with `gcc: unrecognized command-line option '-Wl'`.
+	# flag-o-matic filter-flags does not reliably strip these comma-glob
+	# tokens, so scrub every -Wl,* token per compile var explicitly.
+	# (cmake-based caffe2 is immune; this ninja/nvcc path is not.)
+	local _fvar
+	for _fvar in CFLAGS CXXFLAGS CPPFLAGS; do
+		export ${_fvar}="$(sed 's/-Wl,[^ ]*//g' <<<"${!_fvar}")"
+	done
 
 	export FORCE_CUDA=0
 	if use cuda || use rocm ; then
