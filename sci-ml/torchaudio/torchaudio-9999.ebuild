@@ -47,6 +47,10 @@ python_compile() {
 	export USE_ROCM=0
 	export BUILD_CUDA_CTC_DECODER=0
 
+	# Strip linker flags that leaked into CXXFLAGS so the C++ extension build
+	# doesn't choke on -Wl,* (see torchvision-9999 for the nvcc variant).
+	filter-flags '-Wl,*'
+
 	MAX_JOBS="$(get_makeopts_jobs)" \
 		distutils-r1_python_compile -j1
 }
