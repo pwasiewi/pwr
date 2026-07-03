@@ -452,4 +452,19 @@ src_install() {
 	mkdir -p python/torch || die
 	cp torch/version.py python/torch/ || die
 	python_install
+
+	# PyTorch 2.14 HEAD regressed the install DESTINATION of the torch python
+	# bindings: the compiled _C extension and its top-level stubs land in
+	# ${EPREFIX}/usr instead of site-packages/torch/, so `import torch` fails
+	# to load torch._C (it finds the .pyi stub dir instead). Relocate the
+	# extension (critical) plus the stray stubs into torch/, and drop the
+	# duplicates that are already provided under torch/ (version.py via
+	# python/torch above; _C_flatbuffer/ by the pytorch package).
+	local sitedir f
+	sitedir=$(python_get_sitedir)
+	for f in _C.cpython-*.so _VF.pyi return_types.pyi; do
+		[[ -e ${D}/usr/${f} ]] && { mv "${D}/usr/${f}" "${D}${sitedir}/torch/" || die; }
+	done
+	rm -f "${D}/usr/version.py" || die
+	rm -rf "${D}/usr/_C_flatbuffer" || die
 }
