@@ -20,11 +20,15 @@ EGIT_REPO_URI="https://github.com/vllm-project/vllm.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
 
-# flash-attention commit pinned by cmake/external_projects/vllm_flash_attn.cmake.
-# Read dynamically from the checked-out source in src_unpack; fallback to the
-# 0.24.0 pin so the SRC_URI is still valid before the first git fetch.
-# Update VLLM_FA_COMMIT when vllm HEAD bumps the GIT_TAG.
-VLLM_FA_COMMIT="803020a8fa15407871341d41eba4919ade2ee1ee"
+# flash-attention commit that vllm main pins in
+# cmake/external_projects/vllm_flash_attn.cmake (GIT_TAG).  HARD-pinned here:
+# SRC_URI is evaluated at parse time, so the fetched tarball, its Manifest
+# entry and the FILESDIR patches must all match this exact commit.  We force
+# vllm's CMake to use this tree via VLLM_FLASH_ATTN_SRC_DIR (src_configure),
+# bypassing its own FetchContent GIT_TAG.  src_unpack only *warns* if vllm HEAD
+# has since bumped the GIT_TAG — bump VLLM_FA_COMMIT (+ tarball, Manifest, the
+# two -py314 / -fa3-only patches) when that happens.
+VLLM_FA_COMMIT="2c839c33742309ec41e620bf837495ec9926c56e"
 
 DESCRIPTION="High-throughput, memory-efficient inference and serving engine for LLMs (live)"
 HOMEPAGE="
@@ -198,30 +202,26 @@ src_unpack() {
 	git-r3_src_unpack
 
 	if use cuda; then
-		# Re-read the flash-attention commit from the freshly-checked-out source.
-		# This keeps the pin in sync with vllm HEAD without editing the ebuild.
+		# Maintenance check only: warn (do NOT override) if vllm HEAD has bumped
+		# the flash-attn GIT_TAG past our hard pin.  Overriding VLLM_FA_COMMIT
+		# here would desync from the parse-time SRC_URI fetch + Manifest + the
+		# commit-named patches, which is exactly the failure this replaced.
 		local fa_cmake="${EGIT_CHECKOUT_DIR}/cmake/external_projects/vllm_flash_attn.cmake"
 		if [[ -f ${fa_cmake} ]]; then
 			local fa_commit_live
 			fa_commit_live=$(grep 'GIT_TAG' "${fa_cmake}" | grep -oE '[0-9a-f]{40}' | head -n 1)
-			if [[ -n ${fa_commit_live} ]]; then
-				VLLM_FA_COMMIT="${fa_commit_live}"
-			else
-				ewarn "Could not parse flash-attention GIT_TAG from ${fa_cmake}; using fallback ${VLLM_FA_COMMIT}"
+			if [[ -n ${fa_commit_live} && ${fa_commit_live} != "${VLLM_FA_COMMIT}" ]]; then
+				ewarn "vllm main now pins flash-attn ${fa_commit_live:0:7}, ebuild has ${VLLM_FA_COMMIT:0:7}."
+				ewarn "Bump VLLM_FA_COMMIT (+ tarball, Manifest, -py314/-fa3-only patches) to match."
+				ewarn "Building against the pinned ${VLLM_FA_COMMIT:0:7} via VLLM_FLASH_ATTN_SRC_DIR."
 			fi
 		fi
 
-		# If the pre-fetched tarball matches the live commit, use it directly.
-		# Otherwise the cuda path needs network-sandbox bypass to fetch it.
+		# The pinned tarball is pre-fetched by SRC_URI; unpack it so
+		# VLLM_FLASH_ATTN_SRC_DIR (src_configure) can point CMake at it and skip
+		# its network FetchContent.
 		local fa_tarball="${DISTDIR}/vllm-flash-attn-${VLLM_FA_COMMIT:0:7}.gh.tar.gz"
-		if [[ -f ${fa_tarball} ]]; then
-			unpack "${fa_tarball}"
-		else
-			ewarn "flash-attention tarball for ${VLLM_FA_COMMIT:0:7} not in DISTDIR;"
-			ewarn "network-sandbox must be off for cuda builds (already in RESTRICT)."
-			# FetchContent will pull it during the CMake build via VLLM_FLASH_ATTN_SRC_DIR
-			# being unset — vllm falls back to fetching via cmake.
-		fi
+		[[ -f ${fa_tarball} ]] && unpack "${fa_tarball}"
 	fi
 }
 

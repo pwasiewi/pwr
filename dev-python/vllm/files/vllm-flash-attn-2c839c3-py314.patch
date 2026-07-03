@@ -1,0 +1,23 @@
+vllm-flash-attn: allow Python 3.14 in the supported-versions gate.
+
+vllm's PYTHON_COMPAT enables python3_14, but bundled vllm-flash-attn hard-codes
+a supported-Python whitelist in CMakeLists.txt and asserts against it via
+find_python_constrained_versions() (cmake/utils.cmake). On 3.14 CMake aborts at
+configure time with FATAL_ERROR before any extension is built. The extensions
+are built against the stable ABI (USE_SABI 3 / WITH_SOABI), so the abi3 module
+is independent of the CPython minor; this whitelist is a pure build-time
+assertion, not an ABI constraint. Widening it to add "3.14" is safe.
+
+Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
+
+--- CMakeLists.txt.orig
++++ CMakeLists.txt
+@@ -19,7 +19,7 @@
+ set(ignoreMe "${VLLM_PYTHON_PATH}")
+ 
+ # Supported python versions. These should be kept in sync with setup.py.
+-set(PYTHON_SUPPORTED_VERSIONS "3.9" "3.10" "3.11" "3.12" "3.13")
++set(PYTHON_SUPPORTED_VERSIONS "3.9" "3.10" "3.11" "3.12" "3.13" "3.14")
+ 
+ # Supported NVIDIA architectures.
+ set(CUDA_SUPPORTED_ARCHS "8.0;8.6;8.9;9.0")
