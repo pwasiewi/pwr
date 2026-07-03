@@ -460,10 +460,13 @@ src_install() {
 	# extension (critical) plus the stray stubs into torch/, and drop the
 	# duplicates that are already provided under torch/ (version.py via
 	# python/torch above; _C_flatbuffer/ by the pytorch package).
+	# NB: glob against the real ${D}/usr/ path — a bare `_C.cpython-*.so` in the
+	# loop list would be matched against CWD (the build dir) and left literal,
+	# so the [[ -e ]] test would silently fail and the file would NOT move.
 	local sitedir f
 	sitedir=$(python_get_sitedir)
-	for f in _C.cpython-*.so _VF.pyi return_types.pyi; do
-		[[ -e ${D}/usr/${f} ]] && { mv "${D}/usr/${f}" "${D}${sitedir}/torch/" || die; }
+	for f in "${D}/usr/"_C.cpython-*.so "${D}/usr/"_VF.pyi "${D}/usr/"return_types.pyi; do
+		[[ -e ${f} ]] && { mv "${f}" "${D}${sitedir}/torch/" || die; }
 	done
 	rm -f "${D}/usr/version.py" || die
 	rm -rf "${D}/usr/_C_flatbuffer" || die
