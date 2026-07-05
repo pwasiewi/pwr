@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		Tyro inspects annotated Python callables and dataclasses to build
+		command-line parsers with help text, nested configuration support,
+		and typed argument conversion.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">brentyi/tyro</remote-id>
+		<remote-id type="pypi">tyro</remote-id>
+	</upstream>
+</pkgmetadata>

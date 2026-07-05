@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		Unsloth Zoo contains shared training, patching, saving, and model
+		utility code used by Unsloth.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">unslothai/unsloth-zoo</remote-id>
+		<remote-id type="pypi">unsloth_zoo</remote-id>
+	</upstream>
+</pkgmetadata>

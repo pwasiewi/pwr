@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		Unsloth provides optimized model loading, LoRA fine-tuning,
+		reinforcement learning patches, and model export helpers for LLM
+		training workflows.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">unslothai/unsloth</remote-id>
+		<remote-id type="pypi">unsloth</remote-id>
+	</upstream>
+</pkgmetadata>

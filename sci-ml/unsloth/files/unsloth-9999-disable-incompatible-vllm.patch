@@ -1,0 +1,27 @@
+--- a/unsloth/import_fixes.py
++++ b/unsloth/import_fixes.py
+@@ -499,16 +499,18 @@ def fix_vllm_guided_decoding_params():
+     def _maybe_raise_vllm_transformers_mismatch(error):
+         error_text = str(error)
+         if "ALLOWED_LAYER_TYPES" in error_text or "transformers.configuration_utils" in error_text:
++            global VLLM_BROKEN
+             try:
+                 vllm_version = importlib_version("vllm")
+             except Exception:
+                 vllm_version = "unknown"
+-            raise RuntimeError(
++            logger.warning(
+                 "Unsloth: vLLM with version "
+                 f"{vllm_version} does not yet support transformers>=5.0.0. "
+-                "Please downgrade to transformers==4.57.3 via "
+-                'pip install --force-reinstall "transformers==4.57.3". '
+-                f"Original error: {error}"
+-            ) from error
++                "Disabling vLLM imports and continuing without vLLM acceleration. "
++                f"Original error: {error}"
++            )
++            VLLM_BROKEN = True
++            _install_vllm_blocker()
+ 
+     if importlib.util.find_spec("vllm") is None:
+         return

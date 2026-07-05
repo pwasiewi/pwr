@@ -1,0 +1,14 @@
+--- a/unsloth_zoo/__init__.py
++++ b/unsloth_zoo/__init__.py
+@@ -216,7 +216,10 @@ if not _SKIP_GPU_INIT:
+     # Fixes https://github.com/unslothai/unsloth/issues/38
+     from importlib.metadata import version as importlib_version
+     torch_version_raw = str(importlib_version("torch"))
+-    torch_version = str(re.match(r"[0-9\.]{3,}", torch_version_raw).group(0)).split(".")
++    if re.match(r"[0-9]+\.[0-9]+", torch_version_raw) is None:
++        import torch as _unsloth_torch
++        torch_version_raw = str(_unsloth_torch.__version__)
++    torch_version = str(re.match(r"[0-9]+\.[0-9]+", torch_version_raw).group(0)).split(".")
+     major_torch, minor_torch = torch_version[0], torch_version[1]
+     major_torch, minor_torch = int(major_torch), int(minor_torch)
+     IS_TORCH_2_9_OR_NEWER = (major_torch > 2) or (major_torch == 2 and minor_torch >= 9)

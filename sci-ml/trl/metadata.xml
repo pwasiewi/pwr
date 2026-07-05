@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		TRL provides trainers and utilities for supervised fine-tuning,
+		preference optimization, and reinforcement learning methods such as
+		GRPO for transformer language models.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">huggingface/trl</remote-id>
+		<remote-id type="pypi">trl</remote-id>
+	</upstream>
+</pkgmetadata>
