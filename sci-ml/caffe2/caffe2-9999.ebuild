@@ -314,6 +314,11 @@ src_configure() {
 	fi
 
 	local mycmakeargs=(
+		# Release defines -DNDEBUG. PyTorch's default RelWithDebInfo leaves the
+		# C/C++ flag vars empty (no NDEBUG), so CPython internal asserts compiled
+		# inline into torch/csrc/dynamo/eval_frame.c stay live and abort under
+		# Python 3.14 (PyStackRef_DUP: !PyStackRef_IsNull). Force Release.
+		-DCMAKE_BUILD_TYPE=Release
 		-DBUILD_CUSTOM_PROTOBUF=OFF
 		-DBUILD_TEST=OFF
 		-DLIBSHM_INSTALL_LIB_SUBDIR="${EPREFIX}"/usr/$(get_libdir)
