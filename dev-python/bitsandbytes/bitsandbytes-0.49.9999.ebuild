@@ -3,12 +3,18 @@
 
 EAPI=8
 
+# Upstream backend is scikit_build_core.setuptools.build_meta with
+# wheel.cmake=false: the PEP517 build only packages a prebuilt
+# libbitsandbytes*.so (via setuptools package-data).  We build the
+# library with the cmake eclass and let the wheel pick it up from
+# ${S}/bitsandbytes (LIBRARY_OUTPUT_DIRECTORY points there).
 DISTUTILS_EXT=1
-DISTUTILS_USE_PEP517=scikit-build-core
+DISTUTILS_USE_PEP517=standalone
 PYTHON_COMPAT=( python3_{10..14} )
 DISTUTILS_SINGLE_IMPL=1
+CMAKE_BUILD_TYPE=Release
 
-inherit distutils-r1
+inherit cmake cuda distutils-r1
 
 BNB_COMMIT="8ab26f751931610043f34938720d423bc80f5896"
 
@@ -22,7 +28,7 @@ S="${WORKDIR}/${PN}-${BNB_COMMIT}"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="cpu +cuda rocm"
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
@@ -49,16 +55,11 @@ RDEPEND="
 "
 DEPEND="${RDEPEND}"
 BDEPEND="
-	>=dev-build/cmake-3.22.1
-	app-alternatives/ninja
 	$(python_gen_cond_dep '
 		>=dev-python/scikit-build-core-0.11[${PYTHON_USEDEP}]
 		>=dev-python/setuptools-77.0.3[${PYTHON_USEDEP}]
 		>=dev-python/trove-classifiers-2025.8.6.13[${PYTHON_USEDEP}]
 	')
-	cuda? (
-		dev-util/nvidia-cuda-toolkit:=
-	)
 	rocm? (
 		>=dev-util/hip-7.2:=
 		>=dev-util/hipcc-7.2:=
@@ -84,47 +85,45 @@ bnb_compute_capability() {
 
 src_prepare() {
 	sed -i \
-		-e '/wheel\.cmake = false/d' \
-		-e "s/__version__ = .*/__version__ = \"${PV}\"/" \
-		bitsandbytes/__init__.py pyproject.toml || die
+		-e "s/^__version__ = .*/__version__ = \"${PV}\"/" \
+		bitsandbytes/__init__.py || die
 
+	cmake_src_prepare
 	distutils-r1_src_prepare
 }
 
-python_configure_all() {
+src_configure() {
 	local backend=cpu
 	use cuda && backend=cuda
 	use rocm && backend=hip
 
-	DISTUTILS_ARGS=(
-		-DCMAKE_BUILD_TYPE=Release
+	local mycmakeargs=(
 		-DCOMPUTE_BACKEND="${backend}"
 	)
 
 	if use cuda; then
-		DISTUTILS_ARGS+=(
+		cuda_add_sandbox
+		mycmakeargs+=(
 			-DCOMPUTE_CAPABILITY="$(bnb_compute_capability)"
+			-DCMAKE_CUDA_FLAGS="$(cuda_gccdir -f | tr -d \")"
 		)
-		if [[ -n ${BNB_CUDA_VERSION:-} ]]; then
-			DISTUTILS_ARGS+=( -DCUDA_VERSION="${BNB_CUDA_VERSION}" )
-		fi
 	fi
 
 	if use rocm; then
 		if [[ -n ${AMDGPU_TARGETS:-} ]]; then
-			DISTUTILS_ARGS+=( -DAMDGPU_TARGETS="${AMDGPU_TARGETS}" )
-		fi
-		if [[ -n ${BNB_ROCM_VERSION:-} ]]; then
-			DISTUTILS_ARGS+=( -DROCM_VERSION="${BNB_ROCM_VERSION}" )
+			mycmakeargs+=( -DBNB_ROCM_ARCH="${AMDGPU_TARGETS}" )
 		fi
 	fi
+
+	cmake_src_configure
+	distutils-r1_src_configure
 }
 
-python_compile() {
-	local v
-	for v in CFLAGS CXXFLAGS CPPFLAGS; do
-		export ${v}="$(sed 's/-Wl,[^ ]*//g' <<<"${!v}")"
-	done
+src_compile() {
+	cmake_src_compile
+	distutils-r1_src_compile
+}
 
-	distutils-r1_python_compile
+src_install() {
+	distutils-r1_src_install
 }
