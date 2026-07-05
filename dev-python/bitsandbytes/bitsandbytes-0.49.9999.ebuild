@@ -22,17 +22,17 @@ S="${WORKDIR}/${PN}-${BNB_COMMIT}"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="-* ~amd64"
+KEYWORDS=""
 IUSE="cpu +cuda rocm"
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
-	^^ ( cpu cuda rocm )
+	?? ( cpu cuda rocm )
 "
 
 RDEPEND="
 	${PYTHON_DEPS}
-	>=sci-ml/pytorch-2.4[${PYTHON_SINGLE_USEDEP}]
-	<sci-ml/pytorch-3[${PYTHON_SINGLE_USEDEP}]
+	~sci-ml/caffe2-9999[${PYTHON_SINGLE_USEDEP}]
+	~sci-ml/pytorch-9999[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		dev-python/numpy[${PYTHON_USEDEP}]
 		>=dev-python/packaging-20.9[${PYTHON_USEDEP}]
