@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		bitsandbytes provides k-bit optimizer and quantization kernels for PyTorch,
+		including CUDA and ROCm backends.
+	</longdescription>
+	<use>
+		<flag name="cpu">Build the CPU backend library.</flag>
+		<flag name="cuda">Build the NVIDIA CUDA backend library.</flag>
+		<flag name="rocm">Build the AMD ROCm/HIP backend library.</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">bitsandbytes-foundation/bitsandbytes</remote-id>
+		<remote-id type="pypi">bitsandbytes</remote-id>
+	</upstream>
+</pkgmetadata>
