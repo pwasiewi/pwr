@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Fork of llama.cpp by Ivan Kawrakow with additional SOTA quantization
+    types (IQK), fused MoE operations, MTP/self-speculative decoding and
+    improved CPU and hybrid GPU/CPU inference performance. Installed under
+    /opt/ik-llama-cpp with ik- prefixed symlinks in /usr/bin to coexist
+    with sci-misc/llama-cpp.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">ikawrakow/ik_llama.cpp</remote-id>
+  </upstream>
+</pkgmetadata>
