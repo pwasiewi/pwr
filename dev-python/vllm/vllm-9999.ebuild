@@ -61,7 +61,7 @@ REQUIRED_USE="
 RDEPEND="
 	>=sci-ml/pytorch-2.11.0[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/caffe2[distributed,gloo]
-	>=sci-ml/transformers-4.56.0[${PYTHON_SINGLE_USEDEP}]
+	>=sci-ml/transformers-5.5.3[${PYTHON_SINGLE_USEDEP}]
 	>=sci-ml/tokenizers-0.21.1[${PYTHON_SINGLE_USEDEP}]
 	>=dev-python/xgrammar-0.2.0[${PYTHON_SINGLE_USEDEP}]
 	<dev-python/xgrammar-1.0.0[${PYTHON_SINGLE_USEDEP}]
