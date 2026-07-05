@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		PEFT (Parameter-Efficient Fine-Tuning) enables efficient adaptation
+		of large pretrained models (LoRA, prompt tuning, prefix tuning, etc.)
+		by fine-tuning only a small number of extra parameters.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">huggingface/peft</remote-id>
+		<remote-id type="pypi">peft</remote-id>
+	</upstream>
+</pkgmetadata>
