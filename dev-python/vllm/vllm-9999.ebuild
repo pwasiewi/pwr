@@ -228,6 +228,9 @@ src_unpack() {
 src_prepare() {
 	distutils-r1_src_prepare
 
+	# fused single-tensor PEFT adapters on packed modules (unsloth GRPO)
+	eapply "${FILESDIR}/vllm-9999-lora-fused-packed-module.patch"
+
 	# vllm's setup.py unconditionally wires the vllm-rs RustExtension.
 	# The live ebuild does not support USE=rust (crate vendor set not maintained).
 	grep -q 'rust_extensions=rust_extensions,' setup.py ||

@@ -1,0 +1,32 @@
+lora: accept fused single-tensor adapters on packed modules.
+
+PEFT adapters trained directly on vLLM's fused modules (qkv_proj,
+gate_up_proj) — as unsloth's fast_inference GRPO training does — reach
+MergedColumnParallelLinearWithLoRA.set_lora() as one plain (lora_a,
+lora_b) tensor pair covering all output slices. set_lora() indexed them
+as per-slice lists and crashed on the first generation:
+
+    IndexError: tuple index out of range
+    (lora_a[i] on a 2-D tensor yields a 1-D row; .shape[1] then fails)
+
+expand_packed_lora() already knows how to split a lora_b spanning
+multiple output slices and replicate the shared lora_a — it just
+requires list inputs. Wrap plain tensors into single-element lists so
+the existing (upstream-tested) expansion and TP slicing handle the rest.
+--- a/vllm/lora/layers/column_parallel_linear.py	2026-07-06 20:39:11.547229703 +0200
++++ b/vllm/lora/layers/column_parallel_linear.py	2026-07-06 20:39:11.566893528 +0200
+@@ -307,6 +307,14 @@
+     ):
+         self.reset_lora(index)
+ 
++        # Adapters trained directly on the packed module (e.g. PEFT attached
++        # to vLLM's fused qkv_proj/gate_up_proj as a single Linear, as
++        # unsloth fast_inference training does) arrive as one plain tensor
++        # pair covering all slices. Wrap them so expand_packed_lora() splits
++        # lora_b by output_sizes and replicates lora_a per slice.
++        if not isinstance(lora_b, list) and self.n_slices > 1:
++            lora_a, lora_b = [lora_a], [lora_b]
++
+         # Expand packed adapter groups when they don't match n_slices.
+         # E.g. in_proj_qkv (covers Q+K+V) + in_proj_z as 2 groups for a
+         # 4-slice layer: split b_qkv by output_sizes and replicate a_qkv.
