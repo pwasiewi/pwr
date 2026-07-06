@@ -1,0 +1,43 @@
+flex_attention_bwd: always append safe fallback configs.
+
+The shared-memory estimator underestimates real usage for some configs:
+measured on sm_120 (RTX 5070 Ti, 101376 B shared memory per SM) with
+block=64, num_stages=1, head_dim=256, bf16 the kernel actually requires
+114688 B while the formula estimates 75776 B. The needs_patch gate then
+accepted torch's sm12x default FlexBwDConfig(64,64,64,64,1,4) as the
+ONLY candidate, so inductor never benchmarked alternatives and training
+died at kernel launch:
+
+    InductorError: RuntimeError: No valid triton configs.
+    OutOfMemoryError: out of resource: ...flex_attention_backward...
+    Required: 114688 Hardware limit: 101376
+
+The estimator cannot prove a config safe, so drop the gate and always
+append the fallback configs: with more than one candidate inductor
+benchmarks them at compile time and prunes the OOM ones.
+--- a/unsloth_zoo/temporary_patches/flex_attention_bwd.py	2026-07-06 19:43:50.640525481 +0200
++++ b/unsloth_zoo/temporary_patches/flex_attention_bwd.py	2026-07-06 19:43:50.659330187 +0200
+@@ -104,17 +104,12 @@
+                 except Exception:
+                     configs = []
+ 
+-                # Patch only if some original config exceeds shared memory.
+-                needs_patch = False
+-                for c in configs:
+-                    max_block = max(c.block_m1, c.block_n1, c.block_m2, c.block_n2)
+-                    est = _estimate_shmem(max_block, c.num_stages, head_dim, dtype)
+-                    if est > shmem_limit:
+-                        needs_patch = True
+-                        break
+-
+-                if not needs_patch and configs:
+-                    return configs
++                # The estimator UNDERESTIMATES real usage for some configs
++                # (measured on sm_120: block=64, stages=1, head_dim=256, bf16
++                # -> 114688 B actual vs 75776 B estimated), so it cannot prove
++                # a config safe. Always append fallbacks: with >1 candidates
++                # inductor benchmarks at compile time and prunes OOM configs,
++                # instead of baking a single config that fails at launch.
+ 
+                 # Add safe fallback configs for this GPU / head_dim / dtype
+                 safe = _generate_safe_configs(FlexBwDConfig, shmem_limit, head_dim, dtype)

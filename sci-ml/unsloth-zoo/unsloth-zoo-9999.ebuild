@@ -57,6 +57,8 @@ src_prepare() {
 	default
 
 	eapply "${FILESDIR}/${PN}-9999-torch-live-version.patch"
+	# shmem estimator can't prove configs safe; always add fallbacks
+	eapply "${FILESDIR}/${PN}-9999-flex-bwd-always-fallback.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die
