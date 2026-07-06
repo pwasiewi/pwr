@@ -59,6 +59,8 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-torch-live-version.patch"
 	# shmem estimator can't prove configs safe; always add fallbacks
 	eapply "${FILESDIR}/${PN}-9999-flex-bwd-always-fallback.patch"
+	# don't pass TRL's frozen "ref" adapter tensors to vLLM
+	eapply "${FILESDIR}/${PN}-9999-vllm-lora-skip-ref-adapter.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die
