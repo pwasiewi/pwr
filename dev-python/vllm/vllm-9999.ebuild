@@ -265,6 +265,21 @@ src_prepare() {
 }
 
 src_configure() {
+	# vllm's setup.py auto-adds ccache/sccache as the C/C++/CUDA compiler
+	# launcher when either is on PATH, so nvcc kernel objects get cached too.
+	# The bottleneck is persistence: a full CUDA build misses ~40G, which the
+	# 5G ccache default evicts, so every rebuild stays cold (~40 min). Enable
+	# a persistent, portage-writable cache with FEATURES="ccache" (make.conf or
+	# /etc/portage/package.env -> gives CCACHE_DIR=/var/cache/ccache). When it
+	# is active, size the cache and relax nvcc-hostile checks so hits land on
+	# HEAD bumps and Python-only patches. Defaults only; env-file wins.
+	if [[ ${FEATURES} == *ccache* ]] && type -P ccache >/dev/null; then
+		: "${CCACHE_MAXSIZE:=60G}"
+		: "${CCACHE_SLOPPINESS:=locale,time_macros,include_file_ctime,include_file_mtime}"
+		export CCACHE_MAXSIZE CCACHE_SLOPPINESS
+		einfo "ccache active: CCACHE_DIR=${CCACHE_DIR:-<portage default>} MAXSIZE=${CCACHE_MAXSIZE}"
+	fi
+
 	if use cuda; then
 		export VLLM_TARGET_DEVICE=cuda
 		local fa_dir="${WORKDIR}/flash-attention-${VLLM_FA_COMMIT}"
@@ -315,4 +330,15 @@ pkg_postinst() {
 	elog ""
 	elog "This is a live (9999) ebuild tracking vllm main."
 	elog "flashinfer/tilelang/humming-kernels pins may lag behind HEAD."
+
+	if use cuda && [[ ${FEATURES} != *ccache* ]]; then
+		elog ""
+		elog "The CUDA build takes ~40 min with no compiler cache. Enable a"
+		elog "persistent ccache to cut rebuilds to minutes on a warm cache:"
+		elog "  install -d -o portage -g portage /var/cache/ccache"
+		elog "  echo 'dev-python/vllm ccache.conf' >> /etc/portage/package.env"
+		elog "  # /etc/portage/env/ccache.conf: FEATURES=\"ccache\";"
+		elog "  #   CCACHE_DIR=\"/var/cache/ccache\"; CCACHE_MAXSIZE=\"60G\""
+		elog "vllm's setup.py auto-wires ccache as the CUDA compiler launcher."
+	fi
 }
