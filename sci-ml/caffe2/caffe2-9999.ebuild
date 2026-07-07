@@ -382,6 +382,23 @@ src_configure() {
 		cuda_add_sandbox
 		addpredict "/dev/char/"
 
+		# Gentoo's FEATURES=ccache only shims the host compiler (gcc/g++), never
+		# nvcc, and -DUSE_CCACHE=OFF above stops PyTorch from wiring ccache in
+		# itself, so the expensive .cu kernels (cicc/ptxas, Blackwell sm_120)
+		# would never be cached. Wire ccache explicitly as the CUDA compiler
+		# launcher: on a HEAD bump or an ABI-lockstep rebuild (unchanged .cu
+		# sources + nvcc flags) the kernel objects hit the cache and the ~1h
+		# build drops sharply. Host C/C++ keeps using the PATH shim (no
+		# double-wrap). ccache 4.x caches nvcc generically; the arch is just a
+		# hash input. Defaults only; /etc/portage/env wins.
+		if [[ ${FEATURES} == *ccache* ]] && type -P ccache >/dev/null; then
+			: "${CCACHE_MAXSIZE:=150G}"
+			: "${CCACHE_SLOPPINESS:=locale,time_macros,include_file_ctime,include_file_mtime}"
+			export CCACHE_MAXSIZE CCACHE_SLOPPINESS
+			mycmakeargs+=( -DCMAKE_CUDA_COMPILER_LAUNCHER=ccache )
+			einfo "ccache active for nvcc: CCACHE_DIR=${CCACHE_DIR:-<portage default>} MAXSIZE=${CCACHE_MAXSIZE}"
+		fi
+
 		mycmakeargs+=(
 			-DUSE_CUDNN=ON
 			-DTORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5 7.0}"
