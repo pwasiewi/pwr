@@ -230,6 +230,8 @@ src_prepare() {
 
 	# fused single-tensor PEFT adapters on packed modules (unsloth GRPO)
 	eapply "${FILESDIR}/vllm-9999-lora-fused-packed-module.patch"
+	# stacked q/k/v name mapping collapses per-module LoRA entries
+	eapply "${FILESDIR}/vllm-9999-lora-no-stacked-name-mapping.patch"
 
 	# vllm's setup.py unconditionally wires the vllm-rs RustExtension.
 	# The live ebuild does not support USE=rust (crate vendor set not maintained).

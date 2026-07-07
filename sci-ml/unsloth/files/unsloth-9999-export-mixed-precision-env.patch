@@ -1,0 +1,31 @@
+Export ACCELERATE_MIXED_PRECISION when the user sets bf16/fp16 explicitly.
+
+The generated trainer __init__ only exports ACCELERATE_MIXED_PRECISION
+when neither bf16 nor fp16 is set in the training config (the "pick for
+me" branch). When the user passes bf16=True the variable stays unset —
+plain `python script.py` never sets it, only `accelerate launch` does —
+and every unsloth `_autocast_dtype` heuristic then falls back to its
+'fp16' default. fp16 autocast over a bf16 model promotes hidden states
+to fp32 at residual joins and the fast_lora kernels crash:
+
+    RuntimeError: self and mat2 must have the same dtype,
+    but got Half and Float
+
+Add the missing branch mirroring the user's explicit choice.
+--- a/unsloth/models/rl.py	2026-07-06 21:19:25.895409574 +0200
++++ b/unsloth/models/rl.py	2026-07-06 21:19:25.913546039 +0200
+@@ -1049,6 +1049,14 @@
+             "    os.environ['ACCELERATE_MIXED_PRECISION'] = 'no'\n"
+             "    if hasattr(args, 'mixed_precision'): args.mixed_precision = 'no'\n"
+             "    # args.mixed_precision is a new argument which needs to be set now\n"
++            "elif use_bf16 or use_fp16:\n"
++            "    # User explicitly set bf16/fp16 in the config. Export the env var:\n"
++            "    # the _autocast_dtype heuristics default to 'fp16' when it is\n"
++            "    # unset (plain `python script.py` never sets it, only\n"
++            "    # `accelerate launch` does), which mixes fp16 autocast into a\n"
++            "    # bf16 stack and breaks fast_lora matmuls with dtype errors.\n"
++            "    os.environ['ACCELERATE_MIXED_PRECISION'] = 'bf16' if use_bf16 else 'fp16'\n"
++            "    if hasattr(args, 'mixed_precision'): args.mixed_precision = 'bf16' if use_bf16 else 'fp16'\n"
+             "\n"
+         )
+         extra_args += mixed_precision

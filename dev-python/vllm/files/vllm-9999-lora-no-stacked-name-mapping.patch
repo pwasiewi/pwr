@@ -1,0 +1,34 @@
+lora: don't apply stacked fusion mappings to LoRA tensor names.
+
+Model weights mappers (e.g. Qwen2's hf_to_vllm_mapper) carry
+orig_to_new_stacked entries like ".q_proj" -> (".qkv_proj", "q").
+parse_fine_tuned_lora_name() maps LoRA tensor names through
+WeightsMapper._map_name(), which discards the shard id, so the q/k/v
+(and gate/up) adapter entries all collapse into one "qkv_proj" /
+"gate_up_proj" key in from_lora_tensors() and overwrite one another.
+Only the last sub-adapter survives, and activation later fails, e.g.:
+
+    ValueError: Cannot determine how to split lora_b with 256 rows into
+    3 slices with output sizes [1536, 256, 256] starting from index 0.
+
+Strip stacked mappings before mapping LoRA names; per-sub-module LoRAs
+are merged later via packed_modules_mapping (_create_merged_loras_inplace).
+--- a/vllm/lora/utils.py	2026-07-06 20:52:08.549839086 +0200
++++ b/vllm/lora/utils.py	2026-07-06 20:52:59.953373424 +0200
+@@ -168,6 +168,16 @@
+             is_lora_a whether the tensor is lora_a or lora_b.
+     """
+ 
++    # Stacked (fusion) mappings like ".q_proj" -> (".qkv_proj", "q") must
++    # not be applied to LoRA tensor names: q/k/v adapter entries would
++    # collapse into a single "qkv_proj" key in from_lora_tensors and
++    # overwrite one another (_map_name discards the shard id). Sub-module
++    # LoRAs are packed later via packed_modules_mapping instead.
++    if weights_mapper and weights_mapper.orig_to_new_stacked:
++        import dataclasses
++
++        weights_mapper = dataclasses.replace(weights_mapper, orig_to_new_stacked={})
++
+     # LoRA weight qualified name usually starts with `base_model.model.`,
+     # so we remove the prefix `base_model.model.` to make the following
+     # mapping correctly.

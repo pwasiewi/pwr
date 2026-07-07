@@ -30,6 +30,13 @@ DEPEND="${RDEPEND}"
 # Test suite requires network, model downloads, and optional backends.
 RESTRICT="test"
 
+src_prepare() {
+	default
+
+	# frozen "ref" adapter must inherit dtype from "default" (GRPO, beta != 0)
+	eapply "${FILESDIR}/${PN}-9999-grpo-ref-adapter-dtype.patch"
+}
+
 pkg_postinst() {
 	elog "TRL optional integrations for this Unsloth GRPO setup include:"
 	elog "  sci-ml/peft, dev-python/vllm, dev-python/bitsandbytes"

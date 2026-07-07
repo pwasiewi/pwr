@@ -64,6 +64,8 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-disable-incompatible-vllm.patch"
 	# TRL >= 1.8 unpacks (logps, entropies, aux_loss) — 3-tuple returns
 	eapply "${FILESDIR}/${PN}-9999-trl18-logps-aux-loss-3tuple.patch"
+	# export ACCELERATE_MIXED_PRECISION for explicit bf16/fp16 configs
+	eapply "${FILESDIR}/${PN}-9999-export-mixed-precision-env.patch"
 }
 
 pkg_postinst() {

@@ -1,0 +1,48 @@
+GRPO: keep the frozen "ref" adapter in the compute dtype (quantized models).
+
+model.add_adapter("ref", ...) initializes the reference adapter in fp32;
+ref_param.data.copy_(param.data) keeps the destination dtype, and the
+bf16 cast for quantized models runs later but only touches
+requires_grad=True params. Net effect: a frozen fp32 "ref" adapter next
+to a bf16 "default" one. Kernels that don't autocast per-op (e.g.
+unsloth's fast_lora matmul_lora) then fail while computing reference
+log-probs:
+
+    RuntimeError: self and mat2 must have the same dtype,
+    but got Half and Float
+
+Two changes: clone (instead of copy_) so "ref" inherits dtype/device
+from "default", and include ".ref." params in the quantized bf16 cast.
+--- a/trl/trainer/grpo_trainer.py	2026-07-06 20:58:57.448763517 +0200
++++ b/trl/trainer/grpo_trainer.py	2026-07-06 21:06:41.638363607 +0200
+@@ -443,7 +443,13 @@
+                     if ".default." in name:
+                         ref_name = name.replace(".default.", ".ref.")
+                         ref_param = model.get_parameter(ref_name)
+-                        ref_param.data.copy_(param.data)
++                        # add_adapter() created "ref" in fp32 and copy_()
++                        # keeps the destination dtype, leaving a frozen fp32
++                        # adapter alongside a half-precision "default" (the
++                        # bf16 cast for quantized models below skips it since
++                        # requires_grad is False). Clone instead to inherit
++                        # dtype and device from "default".
++                        ref_param.data = param.data.clone()
+ 
+         # When using gradient checkpointing with PEFT, we need to enable input gradients. transformers.Trainer normally
+         # handles this, but a bug currently prevents it; see https://github.com/huggingface/transformers/issues/42489
+@@ -455,8 +461,13 @@
+         # passing `autocast_adapter_dtype=False` to `get_peft_model`, but this option is not yet supported for
+         # quantized models. See: https://github.com/huggingface/peft/issues/2889
+         if _is_quantized_model:
+-            for param in model.parameters():
+-                if param.requires_grad:
++            # Include the frozen "ref" adapter: it is cloned from "default"
++            # BEFORE this cast runs (both still fp32 after k-bit prepare),
++            # and requires_grad=False would leave it fp32 next to a bf16
++            # "default", breaking non-autocasting kernels during reference
++            # log-prob computation (Half/BFloat16 x Float matmul).
++            for name, param in model.named_parameters():
++                if param.requires_grad or ".ref." in name:
+                     param.data = param.data.to(torch.bfloat16)
+ 
+         # Reward functions
