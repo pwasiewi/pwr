@@ -1,0 +1,10 @@
+DEFINED_PHASES=install postinst prepare
+DESCRIPTION=An open-source AI agent that lives in your terminal
+EAPI=9
+HOMEPAGE=https://github.com/QwenLM/qwen-code
+KEYWORDS=-* ~amd64 ~arm64
+LICENSE=Apache-2.0 MIT BSD
+RESTRICT=mirror strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/QwenLM/qwen-code/releases/download/v0.19.9/qwen-code-linux-x64.tar.gz -> qwen-code-0.19.9-linux-x64.tar.gz ) arm64? ( https://github.com/QwenLM/qwen-code/releases/download/v0.19.9/qwen-code-linux-arm64.tar.gz -> qwen-code-0.19.9-linux-arm64.tar.gz )
+_md5_=c12dcf27a821a964ab5b5b6279ca2515
