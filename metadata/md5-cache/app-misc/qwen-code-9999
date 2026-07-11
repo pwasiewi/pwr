@@ -1,0 +1,13 @@
+BDEPEND=>=net-libs/nodejs-22[npm] >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile install postinst prepare unpack
+DESCRIPTION=An open-source AI agent that lives in your terminal (built from source)
+EAPI=8
+HOMEPAGE=https://github.com/QwenLM/qwen-code
+INHERIT=edo git-r3 optfeature
+LICENSE=Apache-2.0 MIT BSD Unlicense
+PROPERTIES=live
+RDEPEND=>=net-libs/nodejs-22 !app-misc/qwen-code-bin
+RESTRICT=network-sandbox test
+SLOT=0
+_eclasses_=edo	a5e294016aa84979fcb2459749eb80b2	git-r3	2f8cdb10b033f92c3136aa6488a31c98	optfeature	58cc13bdc4e9a204077e1e7c9a1d7988
+_md5_=48b8df3f26ef2bf8e3d18e578c736cd1

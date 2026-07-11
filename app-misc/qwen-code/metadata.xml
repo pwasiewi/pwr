@@ -3,9 +3,14 @@
 
 <pkgmetadata>
 	<maintainer type="person">
-		<email>douglarek@gmail.com</email>
-		<name>Leo Douglas</name>
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
 	</maintainer>
+	<longdescription>
+		Qwen Code CLI agent built from the TypeScript sources with esbuild,
+		running on the system Node.js runtime. For the upstream self-contained
+		binary release use app-misc/qwen-code-bin instead.
+	</longdescription>
 	<upstream>
 		<remote-id type="github">QwenLM/qwen-code</remote-id>
 	</upstream>

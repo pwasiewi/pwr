@@ -3,17 +3,17 @@
 
 EAPI=8
 
-inherit edo optfeature
+inherit edo git-r3 optfeature
 
 DESCRIPTION="An open-source AI agent that lives in your terminal (built from source)"
 HOMEPAGE="https://github.com/QwenLM/qwen-code"
-SRC_URI="https://github.com/QwenLM/qwen-code/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+EGIT_REPO_URI="https://github.com/QwenLM/qwen-code.git"
 
 # Apache-2.0: qwen-code; MIT/BSD: node_modules inlined by esbuild;
 # Unlicense: vendored ripgrep (MIT || Unlicense)
 LICENSE="Apache-2.0 MIT BSD Unlicense"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS=""
 
 # network-sandbox: npm ci fetches ~1900 packages at build time — vendoring
 # them in SRC_URI is impractical for a private overlay.
@@ -47,8 +47,8 @@ src_compile() {
 	export HOME="${T}"
 	export npm_config_cache="${T}/npm-cache"
 	# npm's "prepare" lifecycle (scripts/prepare.js) runs husky + build +
-	# bundle during npm ci; husky needs .git. Skip it and run the build
-	# steps explicitly — same flow as the upstream release workflow.
+	# bundle during npm ci. Skip it and run the build steps explicitly —
+	# same flow as the upstream release workflow.
 	export QWEN_SKIP_PREPARE=1
 
 	edo npm ci --no-audit --no-fund
