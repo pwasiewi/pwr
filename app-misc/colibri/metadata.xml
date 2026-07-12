@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    colibrì is a pure-C, zero-dependency inference engine for running the
+    GLM-5.2 744B-parameter mixture-of-experts model on consumer hardware by
+    streaming experts from disk (~15-26 GB RAM resident). Includes a Python
+    CLI (coli) for chat, an OpenAI-compatible HTTP server, offline
+    FP8-to-int4 model conversion, and resource planning/diagnostics. The
+    optional CUDA backend keeps resident dense tensors on GPU while expert
+    streaming remains CPU-side to avoid a PCIe bottleneck.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">JustVugg/colibri</remote-id>
+  </upstream>
+  <use>
+    <flag name="cuda">Enable the experimental CUDA backend for resident dense tensors (Linux only)</flag>
+  </use>
+</pkgmetadata>
