@@ -7,7 +7,8 @@ inherit edo git-r3 optfeature
 
 DESCRIPTION="An open-source AI agent that lives in your terminal (built from source)"
 HOMEPAGE="https://github.com/QwenLM/qwen-code"
-EGIT_REPO_URI="https://github.com/QwenLM/qwen-code.git"
+EGIT_REPO_URI="https://github.com/pwasiewi/qwen-code.git"
+EGIT_BRANCH="fix/peg-native-output-retry"
 
 # Apache-2.0: qwen-code; MIT/BSD: node_modules inlined by esbuild;
 # Unlicense: vendored ripgrep (MIT || Unlicense)

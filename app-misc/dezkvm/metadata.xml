@@ -1,7 +1,11 @@
-<?xml version="1.0"?>
-<metadata>
-  <category>app-misc</category>
-  <name>dezkvm</name>
-  <version>9999</version>
-  <description>DezKVM – open‑source, multi‑port IP‑KVM</description>
-</metadata>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription lang="en">
+		DezKVM is a multi-port IP-KVM daemon using standard USB video,
+		audio, HID and CDC devices supported by upstream Linux drivers.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">tobychui/DezKVM</remote-id>
+	</upstream>
+</pkgmetadata>

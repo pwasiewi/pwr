@@ -5,25 +5,38 @@ EAPI=8
 
 inherit git-r3 go-module
 
-DESCRIPTION="DezKVM – open‑source, multi‑port IP‑KVM"
+DESCRIPTION="Open-source multi-port IP-KVM daemon"
 HOMEPAGE="https://github.com/tobychui/DezKVM"
 EGIT_REPO_URI="https://github.com/tobychui/DezKVM.git"
-EGIT_BRANCH="master"
+EGIT_BRANCH="main"
 
-LICENSE="MIT"
-KEYWORDS="~amd64 ~arm64"
+EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
+S="${EGIT_CHECKOUT_DIR}/src/dezkvmd"
+
+LICENSE="GPL-3 BSD MIT"
 SLOT="0"
-RDEPEND="dev-lang/go"
+
+RDEPEND="
+	media-libs/libv4l
+	media-sound/alsa-utils
+"
+
+src_unpack() {
+	git-r3_src_unpack
+	go-module_live_vendor
+}
 
 src_compile() {
-	go build -o "$T/dezkvm" ./cmd/dezkvm || die "go build failed"
+	ego build -o "${T}/dezkvmd" . || die "failed to build dezkvmd"
 }
 
 src_install() {
-	# Install the binary
-	dobin "$T/dezkvm"
+	dobin "${T}/dezkvmd"
+	dosym dezkvmd /usr/bin/dezkvm
+	dodoc "${EGIT_CHECKOUT_DIR}/README.md"
 }
 
 pkg_postinst() {
-	elog "DezKVM binary installed. Refer to the project README for usage instructions."
+	elog "Run dezkvmd -h to list the available modes and options."
+	elog "The compatibility command dezkvm points to dezkvmd."
 }
