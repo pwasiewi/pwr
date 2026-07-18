@@ -147,7 +147,8 @@ DEPEND="
 	qnnpack? ( dev-libs/clog )
 "
 
-# Version-specific patches use caffe2-2.12.0 prefix (latest stable base)
+# Version-specific patches use caffe2-2.12.0 prefix (latest stable base),
+# except removekineto below which is 9999-only (see comment there).
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.5.1-unbundle_fmt.patch.xz
 	"${FILESDIR}"/${PN}-2.5.1-unbundle_kineto.patch.xz
@@ -161,7 +162,15 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-2.9.1-torch_cpu.patch.xz
 	"${FILESDIR}"/${PN}-2.10.0-gentoo.patch.xz
 	"${FILESDIR}"/${PN}-2.11.0-mimalloc.patch.xz
-	"${FILESDIR}"/${PN}-2.12.0-removekineto-pr178960.patch.xz
+	# 9999-specific (not the shared 2.12.0 file, which stays frozen for the
+	# pinned v2.12.0/2.12.1 tag builds): live HEAD added XPU_RUNTIME/
+	# XPU_DRIVER to KinetoEvent::externalId()'s GPU-activity condition list
+	# after the original patch was written, so the shared patch's hunk 3/3
+	# stopped applying (rejects at torch/csrc/autograd/profiler_kineto.cpp,
+	# "1 out of 1 hunk FAILED" on 2026-07-19). This variant folds
+	# XPU_RUNTIME/XPU_DRIVER into the same guarded check. Live ebuild will
+	# need this re-synced again whenever upstream shifts that function.
+	"${FILESDIR}"/${PN}-9999-removekineto-pr178960.patch.xz
 
 	# stuff overlay only: scrub MKL MPI / cluster libs and force GNU
 	# OpenMP threading in caffe2::mkl's public link interface so that
