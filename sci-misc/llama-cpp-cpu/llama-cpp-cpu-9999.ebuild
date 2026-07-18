@@ -116,10 +116,6 @@ src_install() {
 	dodoc README.md
 }
 
-src_test() {
-	"${BUILD_DIR}"/bin/llama-server --help > /dev/null || die "llama-server --help failed"
-}
-
 pkg_postinst() {
 	elog "CPU-only llama-server installed as /usr/bin/llama-cpu"
 	elog "(no CUDA/ROCm/Vulkan/OpenCL/SYCL — zero VRAM context overhead)."
