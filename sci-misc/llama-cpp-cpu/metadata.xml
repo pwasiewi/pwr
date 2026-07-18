@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    CPU-only build of llama.cpp (same upstream as sci-misc/llama-cpp), with
+    CUDA/ROCm/Vulkan/OpenCL/SYCL hard-disabled. Exists to avoid the ~358 MiB
+    CUDA-context VRAM overhead a CUDA-built llama-server carries even at
+    runtime -ngl 0. Installed under /opt/llama-cpp-cpu with only llama-server
+    symlinked system-wide as /usr/bin/llama-cpu, so it coexists with
+    sci-misc/llama-cpp without any file collision.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">ggml-org/llama.cpp</remote-id>
+  </upstream>
+  <use>
+    <flag name="blis">Build a BLIS backend</flag>
+    <flag name="flexiblas">Build a FlexiBLAS backend</flag>
+    <flag name="openblas">Build an OpenBLAS backend</flag>
+    <flag name="openssl">Use openssl to support HTTPS</flag>
+  </use>
+</pkgmetadata>

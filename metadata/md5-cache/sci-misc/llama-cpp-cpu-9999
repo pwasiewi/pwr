@@ -1,0 +1,15 @@
+BDEPEND=app-alternatives/ninja >=dev-build/cmake-3.28.5 >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile configure install postinst prepare test unpack
+DEPEND=openblas? ( sci-libs/openblas:= ) openmp? ( llvm-runtimes/openmp:= ) blis? ( sci-libs/blis:= ) flexiblas? ( sci-libs/flexiblas:= ) openssl? ( dev-libs/openssl:= )
+DESCRIPTION=llama.cpp built CPU-only (no CUDA/ROCm/Vulkan/OpenCL/SYCL context overhead)
+EAPI=8
+HOMEPAGE=https://github.com/ggml-org/llama.cpp
+INHERIT=cmake git-r3
+IUSE=openblas +openmp blis +openssl flexiblas examples cpu_flags_x86_avx cpu_flags_x86_avx2 cpu_flags_x86_avx512f cpu_flags_x86_avx512vbmi cpu_flags_x86_bmi2 cpu_flags_x86_f16c cpu_flags_x86_fma3 cpu_flags_x86_sse4_2
+LICENSE=MIT
+PROPERTIES=live
+RDEPEND=openblas? ( sci-libs/openblas:= ) openmp? ( llvm-runtimes/openmp:= ) blis? ( sci-libs/blis:= ) flexiblas? ( sci-libs/flexiblas:= ) openssl? ( dev-libs/openssl:= )
+REQUIRED_USE=?? ( openblas blis flexiblas )
+SLOT=0
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	c54f532543a549f7318d6c49aaf8e953	git-r3	2f8cdb10b033f92c3136aa6488a31c98
+_md5_=116e73204b6f1469818cab67d7286cf9
