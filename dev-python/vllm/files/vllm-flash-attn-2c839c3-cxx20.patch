@@ -1,0 +1,44 @@
+vllm-flash-attn: build against C++20, not C++17.
+
+vllm-flash-attn hard-codes C++17 in two places: the project-wide
+CMAKE_CXX_STANDARD in CMakeLists.txt, and a per-target CXX_STANDARD property
+set inside define_gpu_extension_target() (cmake/utils.cmake) that overrides
+the project default for every extension target (_vllm_fa2_C, _vllm_fa3_C,
+...). CMake therefore emits -std=c++17 on the compile line regardless of the
+project-wide setting.
+
+vllm's own top-level CMakeLists.txt already builds against C++20
+(CMAKE_CXX_STANDARD 20), and current ATen headers hard-require it:
+
+  /usr/include/ATen/ATen.h:4:2: error: #error C++20 or later compatible
+  compiler is required to use ATen.
+
+sci-ml/pytorch-9999 has moved to a version whose ATen headers enforce this,
+so any TU that includes torch/ATen headers while compiled at -std=c++17
+(csrc/flash_attn/flash_api.cpp, via _vllm_fa2_C) now fails to compile. Bump
+both sites to C++20 to match vllm and the installed torch.
+
+Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
+
+--- CMakeLists.txt.orig
++++ CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 3.26)
+
+ project(vllm_flash_attn LANGUAGES CXX CUDA)
+-set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD 20)
+ set(CMAKE_CXX_EXTENSIONS OFF)
+
+ set(FA2_ENABLED ON)
+--- cmake/utils.cmake.orig
++++ cmake/utils.cmake
+@@ -443,7 +443,7 @@
+     add_dependencies(${GPU_MOD_NAME} hipify${GPU_MOD_NAME})
+   endif()
+
+-  set_property(TARGET ${GPU_MOD_NAME} PROPERTY CXX_STANDARD 17)
++  set_property(TARGET ${GPU_MOD_NAME} PROPERTY CXX_STANDARD 20)
+
+   target_compile_options(${GPU_MOD_NAME} PRIVATE
+     $<$<COMPILE_LANGUAGE:${GPU_LANGUAGE}>:${GPU_COMPILE_FLAGS}>)

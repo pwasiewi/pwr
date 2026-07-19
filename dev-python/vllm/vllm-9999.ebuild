@@ -250,6 +250,7 @@ src_prepare() {
 			# just compile FA3 for all arches which wastes time on non-Hopper).
 			local fa3_patch="${FILESDIR}/vllm-flash-attn-${VLLM_FA_COMMIT:0:7}-fa3-only-when-archs.patch"
 			local py314_patch="${FILESDIR}/vllm-flash-attn-${VLLM_FA_COMMIT:0:7}-py314.patch"
+			local cxx20_patch="${FILESDIR}/vllm-flash-attn-${VLLM_FA_COMMIT:0:7}-cxx20.patch"
 			if [[ -f ${fa3_patch} ]]; then
 				eapply -p0 "${fa3_patch}"
 			else
@@ -258,6 +259,12 @@ src_prepare() {
 			fi
 			if [[ -f ${py314_patch} ]]; then
 				eapply -p0 "${py314_patch}"
+			fi
+			if [[ -f ${cxx20_patch} ]]; then
+				eapply -p0 "${cxx20_patch}"
+			else
+				ewarn "No cxx20 patch for flash-attn ${VLLM_FA_COMMIT:0:7};"
+				ewarn "build will fail against ATen headers requiring C++20 (-std=c++17 hardcoded upstream)."
 			fi
 			popd >/dev/null || die
 		fi
