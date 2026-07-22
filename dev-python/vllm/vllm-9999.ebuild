@@ -141,7 +141,7 @@ RDEPEND="
 			>=dev-python/numba-0.65.0[${PYTHON_USEDEP}]
 			>=dev-python/fastsafetensors-0.3.2[${PYTHON_USEDEP}]
 			~dev-python/nvidia-cutlass-dsl-4.5.2[${PYTHON_USEDEP}]
-			~dev-python/triton-bin-3.6.0[${PYTHON_USEDEP}]
+			~dev-python/triton-bin-3.7.1[${PYTHON_USEDEP}]
 		')
 		dev-util/nvidia-cuda-toolkit:=
 	)
@@ -155,7 +155,7 @@ RDEPEND="
 		$(python_gen_cond_dep '
 			>=dev-python/numba-0.65.0[${PYTHON_USEDEP}]
 			~dev-python/conch-triton-kernels-1.2.1[${PYTHON_USEDEP}]
-			~dev-python/triton-bin-3.6.0[${PYTHON_USEDEP}]
+			~dev-python/triton-bin-3.7.1[${PYTHON_USEDEP}]
 			>=dev-util/amdsmi-7.0.2[${PYTHON_USEDEP}]
 		')
 		>=dev-util/hip-7.2:=
