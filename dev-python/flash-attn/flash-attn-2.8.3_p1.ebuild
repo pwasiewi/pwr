@@ -55,6 +55,10 @@ src_prepare() {
 	rmdir csrc/cutlass 2>/dev/null
 	mv "${WORKDIR}/cutlass-${CUTLASS_COMMIT}" csrc/cutlass || die
 
+	# torch HEAD's ATen errors out below C++20; upstream setup.py pins -std=c++17
+	# (same fix class as pwr's vllm-flash-attn cxx20 patch, 2026-07-19).
+	sed -i 's/-std=c++17/-std=c++20/g' setup.py || die
+
 	distutils-r1_src_prepare
 }
 
