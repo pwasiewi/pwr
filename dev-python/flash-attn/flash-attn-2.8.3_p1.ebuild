@@ -71,6 +71,9 @@ src_compile() {
 	# Blackwell sm_120 SASS-only (torch cpp_extension wants the dotted form).
 	# +PTX omitted on purpose: single-GPU host, smaller binaries.
 	export TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-12.0}"
+	# setup.py IGNORES TORCH_CUDA_ARCH_LIST for its own -gencode list and
+	# defaults to 80;90;100;120 (4x the compile time). Its knob is this one:
+	export FLASH_ATTN_CUDA_ARCHS="${FLASH_ATTN_CUDA_ARCHS:-120}"
 	export FORCE_CUDA=1 FLASH_ATTENTION_FORCE_BUILD=TRUE
 	# The flash_bwd_hdim128 kernels peak ~10-13GB each under cicc; at the
 	# upstream default MAX_JOBS they OOM the host. Cap parallelism (2x2
