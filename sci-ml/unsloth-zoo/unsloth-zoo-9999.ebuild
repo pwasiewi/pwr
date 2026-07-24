@@ -61,6 +61,8 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-flex-bwd-always-fallback.patch"
 	# don't pass TRL's frozen "ref" adapter tensors to vLLM
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-skip-ref-adapter.patch"
+	# gate/up duplication + aliased-buffer scaling tripwire (bug (c))
+	eapply "${FILESDIR}/${PN}-9999-vllm-lora-direct-load-fixes.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die
