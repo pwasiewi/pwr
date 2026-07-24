@@ -1,0 +1,78 @@
+Make UNSLOTH_FORCE_FLOAT32=1 actually run float32 (was silently fp16).
+
+Both _autocast_dtype initializers in rl_replacements.py handled
+UNSLOTH_FORCE_FLOAT32=1 by setting the autocast dtype to torch.float16 -
+the exact opposite of the requested full-precision compute. The zoo copy
+(unsloth_zoo/rl_replacements.py) gets this right by setting None.
+
+Setting None alone is not enough here: torch.amp.autocast(dtype=None) on
+CUDA falls back to the device default (fp16 again), so every consumer of
+self._autocast_dtype also gains enabled = self._autocast_dtype is not None,
+which turns the context manager into a no-op (true float32) when forced.
+The dtype_bytes accounting already anticipated None (else-branch = 32).
+--- a/unsloth/models/rl_replacements.py	2026-07-25 01:47:25.950809297 +0200
++++ b/unsloth/models/rl_replacements.py	2026-07-25 01:48:01.340375548 +0200
+@@ -1229,10 +1229,12 @@
+                 else torch.bfloat16
+             )
+             if os.environ.get("UNSLOTH_FORCE_FLOAT32", "0") == "1":
+-                self._autocast_dtype = torch.float16
++                # None = autocast disabled below -> true float32 compute.
++                # (torch.float16 here silently downgraded forced-fp32 to fp16.)
++                self._autocast_dtype = None
+ 
+         os.environ["UNSLOTH_RETURN_HIDDEN_STATES"] = "1"
+-        with torch.amp.autocast(device_type = DEVICE_TYPE, dtype = self._autocast_dtype):
++        with torch.amp.autocast(device_type = DEVICE_TYPE, dtype = self._autocast_dtype, enabled = self._autocast_dtype is not None):
+             # We add 1 to `logits_to_keep` because the last logits of the sequence is later excluded
+             logits = model(
+                 input_ids = input_ids,
+@@ -1295,7 +1297,9 @@
+                     else torch.bfloat16
+                 )
+                 if os.environ.get("UNSLOTH_FORCE_FLOAT32", "0") == "1":
+-                    self._autocast_dtype = torch.float16
++                    # None = autocast disabled below -> true float32 compute.
++                    # (torch.float16 here silently downgraded forced-fp32 to fp16.)
++                    self._autocast_dtype = None
+ 
+             compute_aux_loss = kwargs.get("compute_aux_loss", None)
+ 
+@@ -1586,7 +1590,8 @@
+                         def _pg_run_forward(_pg_layout = _pg_layout, _pg_chunks = _pg_chunks):
+                             with _get_inference_mode_context_manager(model):
+                                 with torch.amp.autocast(
+-                                    device_type = "cuda", dtype = self._autocast_dtype
++                                    device_type = "cuda", dtype = self._autocast_dtype,
++                                    enabled = self._autocast_dtype is not None,
+                                 ):
+                                     _pg_hidden = unwrapped_model(
+                                         input_ids = _pg_layout.flat_ids,
+@@ -1717,7 +1722,7 @@
+                         _pk_cstart = (_pk_L - logits_to_keep) - left_pad_tokens_per_prompt  # [rows]
+                         _pk_ctgt = (_pk_nz_idx[1:, 1] >= _pk_cstart[_pk_nz_idx[1:, 0]]) & _pk_within
+                         with _get_inference_mode_context_manager(model):
+-                            with torch.amp.autocast(device_type = "cuda", dtype = self._autocast_dtype):
++                            with torch.amp.autocast(device_type = "cuda", dtype = self._autocast_dtype, enabled = self._autocast_dtype is not None):
+                                 # use_cache=False: a KV cache silently disables varlen packing
+                                 _pk_hidden = unwrapped_model(
+                                     input_ids = _pk_flat,
+@@ -1766,7 +1771,8 @@
+                             _pk_ref = torch.zeros_like(_pk_result)
+                             with _get_inference_mode_context_manager(model):
+                                 with torch.amp.autocast(
+-                                    device_type = "cuda", dtype = self._autocast_dtype
++                                    device_type = "cuda", dtype = self._autocast_dtype,
++                                    enabled = self._autocast_dtype is not None,
+                                 ):
+                                     for _pk_i in range(total_rows):
+                                         _pk_ni = _pk_len_cpu[_pk_i]
+@@ -1940,7 +1946,7 @@
+                         _extra_vision_kwargs["token_type_ids"] = token_type_ids_chunk
+                     if mm_token_type_ids_chunk is not None:
+                         _extra_vision_kwargs["mm_token_type_ids"] = mm_token_type_ids_chunk
+-                    with torch.amp.autocast(device_type = "cuda", dtype = self._autocast_dtype):
++                    with torch.amp.autocast(device_type = "cuda", dtype = self._autocast_dtype, enabled = self._autocast_dtype is not None):
+                         if pixel_values is None:
+                             outputs = unwrapped_model(
+                                 input_ids = input_ids_chunk,

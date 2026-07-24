@@ -66,6 +66,8 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-trl18-logps-aux-loss-3tuple.patch"
 	# export ACCELERATE_MIXED_PRECISION for explicit bf16/fp16 configs
 	eapply "${FILESDIR}/${PN}-9999-export-mixed-precision-env.patch"
+	# UNSLOTH_FORCE_FLOAT32=1 must not silently autocast to fp16
+	eapply "${FILESDIR}/${PN}-9999-force-float32-not-fp16.patch"
 }
 
 pkg_postinst() {
