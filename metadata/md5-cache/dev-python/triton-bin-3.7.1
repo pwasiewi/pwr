@@ -1,0 +1,16 @@
+BDEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DEFINED_PHASES=compile configure install prepare test unpack
+DESCRIPTION=Triton GPU programming language and compiler (binary wheels)
+EAPI=8
+HOMEPAGE=https://github.com/triton-lang/triton https://pypi.org/project/triton/
+INHERIT=distutils-r1
+IUSE=python_targets_python3_12 python_targets_python3_13 python_targets_python3_14
+KEYWORDS=-* ~amd64
+LICENSE=MIT Apache-2.0-with-LLVM-exceptions NVIDIA-CUDA
+RDEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+REQUIRED_USE=|| ( python_targets_python3_12 python_targets_python3_13 python_targets_python3_14 )
+RESTRICT=bindist mirror strip
+SLOT=0
+SRC_URI=python_targets_python3_12? ( https://files.pythonhosted.org/packages/c4/6f/fb96d15db6f36d6eae4cafb998c2e0353bf59d7c4ea1662d7497f269134a/triton-3.7.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl ) python_targets_python3_13? ( https://files.pythonhosted.org/packages/07/42/2c3ac59253ae8892b6f307875263dd23dc875cdf732d3aea40d6d41fb7cb/triton-3.7.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl ) python_targets_python3_14? ( https://files.pythonhosted.org/packages/a4/09/5683146fda6a2b569deb78ccfd8fbfea8bfe55f726b081c0a6bb18dd6f28/triton-3.7.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl )
+_eclasses_=eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	out-of-source-utils	8e5093bd27b7f541a1913271f25d633a	multibuild	83db098a835f71feb71761f72a694aa2	multilib	fc812e8eb2170022c28272d80a1f9e77	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	python-utils-r1	5fd9a75ca55021d3276ce969f8e28391	python-r1	5fdca77e34fc9af7d6eb47689f33f6bf	distutils-r1	8b4cb6626db7331e3187d652f4bbf9d4
+_md5_=13e37caf412bba6d3a8a1da058d16420

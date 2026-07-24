@@ -1,25 +1,18 @@
-Return 3-tuples from _get_per_token_logps_and_entropies for TRL >= 1.8.
+Return a 3-tuple from _get_per_token_logps_and_entropies for TRL >= 1.7.
 
-TRL 1.8 extended _get_per_token_logps_and_entropies to return
-(logps, entropies, aux_loss) — aux_loss is the MoE router load-balancing
-loss. All call sites in TRL's GRPOTrainer (and hence in the generated
-unsloth_compiled_cache/UnslothGRPOTrainer.py) unpack three values:
-
-    old_per_token_logps, _, _ = self._get_per_token_logps_and_entropies(...)
-
-Unsloth's replacement still returned 2-tuples, crashing the first
-training step with:
+TRL >= 1.7 extended _get_per_token_logps_and_entropies to return
+(logps, entropies, aux_loss); all GRPOTrainer call sites unpack three
+values. Upstream adopted the 3-tuple on the main return path (with a
+version-aware downgrade for TRL < 1.7.0), but the compute_efficient
+early-exit still returns a 2-tuple, crashing the first training step with
 
     ValueError: not enough values to unpack (expected 3, got 2)
 
-Return aux_loss=None (unsloth's efficient path never computes it; TRL
-only consumes it when the model config enables router aux loss).
-
-Patching the template here (instead of the generated cache file) survives
-cache regeneration.
---- a/unsloth/models/rl_replacements.py	2026-07-06 19:43:33.523301146 +0200
-+++ b/unsloth/models/rl_replacements.py	2026-07-06 19:43:33.542408211 +0200
-@@ -1192,7 +1192,7 @@
+whenever the efficient path is taken. Align it with the main return path.
+(Rebased 2026-07-25: original hunk 2 dropped - merged upstream.)
+--- a/unsloth/models/rl_replacements.py	2026-07-25 01:42:20.618964762 +0200
++++ b/unsloth/models/rl_replacements.py	2026-07-25 01:42:20.621138405 +0200
+@@ -1286,7 +1286,7 @@
          # if True: # os.environ.get('UNSLOTH_USE_NEW_MODEL', '0') == '0':
          #     return None, None  # logps, entropies Unsloth efficient GRPO
          if compute_efficient:
@@ -28,12 +21,3 @@ cache regeneration.
          else:
              if not hasattr(self, "_autocast_dtype"):
                  self._autocast_dtype = (
-@@ -1918,7 +1918,7 @@
- 
-             os.environ["UNSLOTH_RETURN_HIDDEN_STATES"] = "0"
- 
--            return logprobs.detach(), entropies  # logps, entropies
-+            return logprobs.detach(), entropies, None  # logps, entropies, aux_loss
-             # input_ids = input_ids[:, -logits_to_keep:]
-             # For transformers<=4.48, logits_to_keep argument isn't supported, so here we drop logits ourselves.
-             # See https://github.com/huggingface/trl/issues/2770
