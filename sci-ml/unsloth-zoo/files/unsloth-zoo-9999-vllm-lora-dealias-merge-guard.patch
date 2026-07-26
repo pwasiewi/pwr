@@ -1,0 +1,128 @@
+Fix GRPO LoRA corruption family: de-alias vLLM hot-load tensors (bug c/d root)
+and harden the merged_16bit save path against finite-garbage corruption.
+
+Failure signatures fixed:
+1. Rollouts rot coherent -> gibberish -> single-token loops within ~5 steps
+   when lora_alpha != lora_rank and real (non-zero) lora_B updates flow;
+   |B|max on the TRAINING side grows x s^8 per optimizer step (x256 for s=2).
+   Cause: load_lora() shipped LIVE training tensors inside
+   LoRARequest(lora_tensors=...). vLLM's LoRAModel.from_lora_tensors stores
+   tensor.to(device, dtype), a NO-OP (same storage) when device+dtype match,
+   and LoRALayerWeights.optimize() then runs `lora_b *= scaling` IN-PLACE on
+   the aliased training weight, once per hot-load (8 generation rounds/step).
+   Fix: ship detached clones (a few MB per hot-load).
+2. In-training save_pretrained_merged(..., "merged_16bit") with the vLLM
+   engine alive emits a model whose LoRA-bearing modules carry finite garbage
+   ~1e12+ (observed on o_proj/down_proj) while the checkpoint on disk is
+   clean. create_lora_statistics stored LIVE GPU references and _merge_lora
+   read them only later, mid-merge, racing the allocator churn.
+   Fix: snapshot lora_A/lora_B/magnitude to CPU at capture time, plus a
+   magnitude tripwire in _merge_lora (|W_merged| vs |W_base|) because the
+   existing isfinite gate cannot catch finite garbage.
+
+Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
+(same hunk region in load_lora).
+
+--- a/unsloth_zoo/vllm_utils.py	2026-07-26 18:11:46.424006098 +0200
++++ b/unsloth_zoo/vllm_utils.py	2026-07-26 18:12:17.754816204 +0200
+@@ -2983,7 +2983,23 @@
+         # its keys (e.g. ...lora_A.ref.weight) survive the .default strip
+         # and vLLM's parse_fine_tuned_lora_name() raises
+         # "... is unsupported LoRA weight".
+-        state_dict = {k.replace(".default", ""):v for k, v in items if ".lora_A.default." in k or ".lora_B.default." in k}
++        # Ship CLONES, never the live training tensors. vLLM's
++        # LoRAModel.from_lora_tensors stores `tensor.to(device, dtype)`,
++        # which is a NO-OP (same storage) when device+dtype already match,
++        # so the engine would hold ALIASES of the training weights:
++        # (1) LoRALayerWeights.optimize() then runs `lora_b *= scaling`
++        #     in-place -> with lora_alpha != lora_rank the TRAINING weights
++        #     get multiplied by s on every hot-load (s^8 per GRPO step
++        #     observed; rollouts rot to gibberish within ~5 steps);
++        # (2) the engine's adapter registry keeps live references into
++        #     training memory, so later readers (save_pretrained_merged with
++        #     the engine alive) race the engine's allocator churn.
++        # A LoRA-sized clone (a few MB) per hot-load is negligible.
++        state_dict = {
++            k.replace(".default", ""): v.detach().clone()
++            for k, v in items
++            if ".lora_A.default." in k or ".lora_B.default." in k
++        }
+ 
+         # vllm_lora_already_loaded(model)
+         lora_request = LoRARequest(str(lora_request_id), lora_request_id, lora_tensors = state_dict, lora_config = peft_config)
+--- a/unsloth_zoo/saving_utils.py	2026-07-26 18:11:46.426122853 +0200
++++ b/unsloth_zoo/saving_utils.py	2026-07-26 18:14:37.896891364 +0200
+@@ -238,6 +238,7 @@
+         # else: a shape mismatch is structural (e.g. vocab resize handled below), not a dequant
+         # failure, so keep the 16bit W here and let the resize path reconcile it.
+     W = W.to(device, dtype = torch.float32, non_blocking = True)
++    W_base_absmax = torch.amax(torch.abs(W)).item()
+     lora_B = lora_stats.lora_B.to(device, dtype = torch.float32, non_blocking = True)
+     lora_A = lora_stats.lora_A.to(device, dtype = torch.float32, non_blocking = True)
+     # Handle vocab resize: LoRA may have more rows than base safetensors weight
+@@ -264,6 +265,18 @@
+         W = (magnitude / weight_norm).unsqueeze(1) * W
+     if not torch.isfinite(torch.amax(W)).item():
+         raise ValueError('Unsloth: Merge failed as there are infinite elements in ' + name)
++    # Recycled-memory corruption (e.g. merging while a colocated vLLM engine is
++    # still alive) folds FINITE garbage (~1e12+) into the export, which the
++    # isfinite gate above cannot catch. A healthy LoRA delta cannot inflate the
++    # merged magnitude by orders of magnitude over the base weight.
++    W_absmax = torch.amax(torch.abs(W)).item()
++    if W_absmax > max(64.0 * W_base_absmax, 1e4):
++        raise ValueError(
++            f"Unsloth: Merge failed for {name}: merged |W|max = {W_absmax:.3e} vs "
++            f"base |W|max = {W_base_absmax:.3e}. The LoRA weights read at merge "
++            "time look like recycled/corrupted GPU memory. Re-merge offline from "
++            "the last checkpoint (do not merge with a live vLLM engine)."
++        )
+     return W
+ pass
+ 
+@@ -438,6 +451,23 @@
+ pass
+ 
+ 
++def _snapshot_lora_weight(weight):
++    # Snapshot LoRA factors to CPU at capture time. create_lora_statistics used
++    # to store LIVE GPU references, and _merge_lora reads them only later while
++    # the merge allocates/frees GBs of VRAM (and, under fast_inference, while
++    # the vLLM engine still owns part of the pool). If a tensor's storage gets
++    # recycled in between, the merge folds finite garbage (~1e12+) into the
++    # export while the checkpoint on disk stays clean. A CPU copy of a LoRA
++    # factor is a few MB and pins the values read at entry.
++    # inference_mode(False): create_lora_statistics runs under
++    # @torch.inference_mode; without this the snapshot would be an inference
++    # tensor (the original code stored plain Parameters), and downstream code
++    # outside inference mode may reject inference tensors.
++    with torch.inference_mode(False):
++        return weight.detach().to("cpu", copy = True)
++pass
++
++
+ @torch.inference_mode
+ def create_lora_statistics(model, merge_into_original = False, return_state_dict = True):
+     # All Unsloth Zoo code licensed under LGPLv3
+@@ -457,19 +487,19 @@
+         if name == "": continue
+ 
+         elif name.endswith(".lora_A.default"):
+-            lora_weights[name[:-len(".lora_A.default")]].lora_A = module.weight
++            lora_weights[name[:-len(".lora_A.default")]].lora_A = _snapshot_lora_weight(module.weight)
+             lora_A_count += 1
+             expand_module_keys(name, module, remove_keys)
+ 
+         elif name.endswith(".lora_B.default"):
+-            lora_weights[name[:-len(".lora_B.default")]].lora_B = module.weight
++            lora_weights[name[:-len(".lora_B.default")]].lora_B = _snapshot_lora_weight(module.weight)
+             lora_B_count += 1
+             expand_module_keys(name, module, remove_keys)
+ 
+         elif name.endswith(".lora_magnitude_vector.default"):
+             # DoRA magnitude vector m; folded onto the merged weight in _merge_lora. Register its
+             # key so the key-consistency check does not flag it (the merged model omits it).
+-            lora_weights[name[:-len(".lora_magnitude_vector.default")]].magnitude = module.weight
++            lora_weights[name[:-len(".lora_magnitude_vector.default")]].magnitude = _snapshot_lora_weight(module.weight)
+             expand_module_keys(name, module, remove_keys)
+ 
+         elif isinstance(module, Linear_LoRA_Layers):

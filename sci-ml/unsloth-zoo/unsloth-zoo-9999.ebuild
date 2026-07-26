@@ -63,6 +63,9 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-skip-ref-adapter.patch"
 	# gate/up duplication + aliased-buffer scaling tripwire (bug (c))
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-direct-load-fixes.patch"
+	# de-alias vLLM hot-load LoRA tensors (bug (c) root) + merge-path
+	# CPU snapshot and magnitude tripwire (bug (d)); after skip-ref-adapter
+	eapply "${FILESDIR}/${PN}-9999-vllm-lora-dealias-merge-guard.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die
