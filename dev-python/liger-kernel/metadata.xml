@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Collection of Triton kernels for efficient LLM training: fused
+    RMSNorm, RoPE, SwiGLU/GeGLU and FusedLinearCrossEntropy that avoids
+    materializing full logits, cutting peak GPU memory on large-vocab
+    models. Integrates with HuggingFace transformers via monkey-patching
+    or TrainingArguments(use_liger_kernel=True).
+  </longdescription>
+  <upstream>
+    <remote-id type="github">linkedin/Liger-Kernel</remote-id>
+    <remote-id type="pypi">liger-kernel</remote-id>
+  </upstream>
+</pkgmetadata>
