@@ -10,7 +10,9 @@ Failure signatures fixed:
    tensor.to(device, dtype), a NO-OP (same storage) when device+dtype match,
    and LoRALayerWeights.optimize() then runs `lora_b *= scaling` IN-PLACE on
    the aliased training weight, once per hot-load (8 generation rounds/step).
-   Fix: ship detached clones (a few MB per hot-load).
+   Fix: ship detached clones (a few MB per hot-load), created under
+   inference_mode(False) so the engine's later in-place scaling does not
+   trip "Inplace update to inference tensor outside InferenceMode".
 2. In-training save_pretrained_merged(..., "merged_16bit") with the vLLM
    engine alive emits a model whose LoRA-bearing modules carry finite garbage
    ~1e12+ (observed on o_proj/down_proj) while the checkpoint on disk is
@@ -18,14 +20,17 @@ Failure signatures fixed:
    read them only later, mid-merge, racing the allocator churn.
    Fix: snapshot lora_A/lora_B/magnitude to CPU at capture time, plus a
    magnitude tripwire in _merge_lora (|W_merged| vs |W_base|) because the
-   existing isfinite gate cannot catch finite garbage.
+   existing isfinite gate cannot catch finite garbage. The tripwire uses
+   torch.aminmax (fused reduction), not amax(abs(W)), to avoid a full-size
+   float32 intermediate that could OOM merges of embed_tokens/lm_head.
 
+Upstream PR: https://github.com/unslothai/unsloth-zoo/pull/951
 Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
 (same hunk region in load_lora).
 
---- a/unsloth_zoo/vllm_utils.py	2026-07-26 18:11:46.424006098 +0200
-+++ b/unsloth_zoo/vllm_utils.py	2026-07-26 18:12:17.754816204 +0200
-@@ -2983,7 +2983,23 @@
+--- a/unsloth_zoo/vllm_utils.py	2026-07-28 10:00:00.000000000 +0200
++++ b/unsloth_zoo/vllm_utils.py	2026-07-28 10:00:00.000000000 +0200
+@@ -2983,7 +2983,30 @@
          # its keys (e.g. ...lora_A.ref.weight) survive the .default strip
          # and vLLM's parse_fine_tuned_lora_name() raises
          # "... is unsupported LoRA weight".
@@ -42,25 +47,50 @@ Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
 +        #     training memory, so later readers (save_pretrained_merged with
 +        #     the engine alive) race the engine's allocator churn.
 +        # A LoRA-sized clone (a few MB) per hot-load is negligible.
-+        state_dict = {
-+            k.replace(".default", ""): v.detach().clone()
-+            for k, v in items
-+            if ".lora_A.default." in k or ".lora_B.default." in k
-+        }
++        # inference_mode(False): load_lora runs under @torch.inference_mode,
++        # so a plain clone would be an inference tensor and vLLM's later
++        # in-place LoRALayerWeights.optimize() scaling (`lora_b *= scaling`)
++        # would raise "Inplace update to inference tensor outside
++        # InferenceMode" on dispatch paths that do not wrap _load_adapter in
++        # inference mode.
++        with torch.inference_mode(False):
++            state_dict = {
++                k.replace(".default", ""): v.detach().clone()
++                for k, v in items
++                if ".lora_A.default." in k or ".lora_B.default." in k
++            }
  
          # vllm_lora_already_loaded(model)
          lora_request = LoRARequest(str(lora_request_id), lora_request_id, lora_tensors = state_dict, lora_config = peft_config)
---- a/unsloth_zoo/saving_utils.py	2026-07-26 18:11:46.426122853 +0200
-+++ b/unsloth_zoo/saving_utils.py	2026-07-26 18:14:37.896891364 +0200
-@@ -238,6 +238,7 @@
+diff --git a/unsloth_zoo/saving_utils.py b/unsloth_zoo/saving_utils.py
+index f38c353a..4057db73 100644
+--- a/unsloth_zoo/saving_utils.py
++++ b/unsloth_zoo/saving_utils.py
+@@ -208,6 +208,15 @@ def _is_bnb_4bit_base(module):
+ pass
+ 
+ 
++def _absmax(t):
++    # max|t| via a single fused reduction. torch.abs(t) would materialize a
++    # second full-size float32 tensor (multi-GB for embed_tokens / lm_head /
++    # fused expert weights) and could OOM a merge that otherwise fits.
++    amin, amax = torch.aminmax(t)
++    return max(abs(amin.item()), abs(amax.item()))
++pass
++
++
+ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
+     if lora_stats.lora_A is None or lora_stats.lora_B is None: return W
+     device = _active_merge_device()
+@@ -238,6 +247,7 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
          # else: a shape mismatch is structural (e.g. vocab resize handled below), not a dequant
          # failure, so keep the 16bit W here and let the resize path reconcile it.
      W = W.to(device, dtype = torch.float32, non_blocking = True)
-+    W_base_absmax = torch.amax(torch.abs(W)).item()
++    W_base_absmax = _absmax(W)
      lora_B = lora_stats.lora_B.to(device, dtype = torch.float32, non_blocking = True)
      lora_A = lora_stats.lora_A.to(device, dtype = torch.float32, non_blocking = True)
      # Handle vocab resize: LoRA may have more rows than base safetensors weight
-@@ -264,6 +265,18 @@
+@@ -264,6 +274,18 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
          W = (magnitude / weight_norm).unsqueeze(1) * W
      if not torch.isfinite(torch.amax(W)).item():
          raise ValueError('Unsloth: Merge failed as there are infinite elements in ' + name)
@@ -68,7 +98,7 @@ Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
 +    # still alive) folds FINITE garbage (~1e12+) into the export, which the
 +    # isfinite gate above cannot catch. A healthy LoRA delta cannot inflate the
 +    # merged magnitude by orders of magnitude over the base weight.
-+    W_absmax = torch.amax(torch.abs(W)).item()
++    W_absmax = _absmax(W)
 +    if W_absmax > max(64.0 * W_base_absmax, 1e4):
 +        raise ValueError(
 +            f"Unsloth: Merge failed for {name}: merged |W|max = {W_absmax:.3e} vs "
@@ -79,7 +109,7 @@ Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
      return W
  pass
  
-@@ -438,6 +451,23 @@
+@@ -438,6 +460,23 @@ def _get_lora_scaling(module):
  pass
  
  
@@ -103,7 +133,7 @@ Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
  @torch.inference_mode
  def create_lora_statistics(model, merge_into_original = False, return_state_dict = True):
      # All Unsloth Zoo code licensed under LGPLv3
-@@ -457,19 +487,19 @@
+@@ -457,19 +496,19 @@ def create_lora_statistics(model, merge_into_original = False, return_state_dict
          if name == "": continue
  
          elif name.endswith(".lora_A.default"):
