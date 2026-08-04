@@ -1,0 +1,15 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=configure install postinst postrm
+DEPEND=>=dev-libs/kpathsea-6.2.1:=
+DESCRIPTION=DVI-to-PostScript translator
+EAPI=8
+HOMEPAGE=https://tug.org/texlive/
+INHERIT=flag-o-matic texlive-common
+IUSE=doc source
+KEYWORDS=~amd64 ~arm64
+LICENSE=GPL-2
+RDEPEND=>=dev-libs/kpathsea-6.2.1:=
+SLOT=0
+SRC_URI=https://mirrors.ctan.org/systems/texlive/Source/texlive-20250308-source.tar.xz https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/texlive-20250308-source.tar.xz https://dev.gentoo.org/~flow/distfiles/texlive/texlive-20250308-source.tar.xz https://mirrors.ctan.org/systems/texlive/tlnet/archive/dvips.r73850.tar.xz https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/archive/dvips.r73850.tar.xz https://dev.gentoo.org/~flow/distfiles/texlive/dvips.r73850.tar.xz doc? ( https://mirrors.ctan.org/systems/texlive/tlnet/archive/dvips.doc.r73850.tar.xz https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/archive/dvips.doc.r73850.tar.xz https://dev.gentoo.org/~flow/distfiles/texlive/dvips.doc.r73850.tar.xz )
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	edo	a5e294016aa84979fcb2459749eb80b2	texlive-common	aabb0dbe0bf01639d8dfebf970b30207
+_md5_=86c66f91c6c2b060571429dbbf285b2e

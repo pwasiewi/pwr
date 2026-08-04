@@ -1,0 +1,15 @@
+BDEPEND=>=app-portage/elt-patches-20250306
+DEFINED_PHASES=configure install prepare
+DEPEND=dev-libs/kpathsea:= iconv? ( virtual/libiconv )
+DESCRIPTION=Library for Japanese pTeX providing a better way of handling character encodings
+EAPI=8
+HOMEPAGE=http://tutimura.ath.cx/ptexlive/?ptexenc
+INHERIT=libtool
+IUSE=iconv
+KEYWORDS=~amd64 ~arm64
+LICENSE=BSD
+RDEPEND=dev-libs/kpathsea:= iconv? ( virtual/libiconv )
+SLOT=0
+SRC_URI=https://mirrors.ctan.org/systems/texlive/Source/texlive-20250308-source.tar.xz https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/texlive-20250308-source.tar.xz https://dev.gentoo.org/~flow/distfiles/texlive/texlive-20250308-source.tar.xz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	libtool	6a96cd90e5da8c7c615015479f46f1a4
+_md5_=3633f6975110e5bf72653f3688d870ee
