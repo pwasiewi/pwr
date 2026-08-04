@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst unpack
+DESCRIPTION=ROCm SDK pre-built distribution from TheRock (AMDGPU_TARGETS-selected)
+EAPI=8
+HOMEPAGE=https://github.com/ROCm/TheRock
+IUSE=amdgpu_targets_gfx1030 amdgpu_targets_gfx1100 amdgpu_targets_gfx1101 amdgpu_targets_gfx1102 amdgpu_targets_gfx1103 amdgpu_targets_gfx1150 amdgpu_targets_gfx1151 amdgpu_targets_gfx1152 amdgpu_targets_gfx1153 amdgpu_targets_gfx1200 amdgpu_targets_gfx1201 amdgpu_targets_gfx908 amdgpu_targets_gfx90a amdgpu_targets_gfx942 amdgpu_targets_gfx950
+KEYWORDS=~amd64
+LICENSE=MIT BSD Apache-2.0 UoI-NCSA Boost-1.0
+RDEPEND=app-arch/zstd:= dev-libs/elfutils sys-process/numactl virtual/libcrypt:= x11-libs/libdrm
+REQUIRED_USE=^^ ( amdgpu_targets_gfx1030 amdgpu_targets_gfx1100 amdgpu_targets_gfx1101 amdgpu_targets_gfx1102 amdgpu_targets_gfx1103 amdgpu_targets_gfx1150 amdgpu_targets_gfx1151 amdgpu_targets_gfx1152 amdgpu_targets_gfx1153 amdgpu_targets_gfx1200 amdgpu_targets_gfx1201 amdgpu_targets_gfx908 amdgpu_targets_gfx90a amdgpu_targets_gfx942 amdgpu_targets_gfx950 )
+RESTRICT=bindist mirror strip
+SLOT=0
+SRC_URI=https://repo.radeon.com/rocm/installer/rocm-runfile-installer/rocm-rel-7.14/rocm-installer-7.14.0-5.run
+_md5_=4479f38536ae1249473d66042df800b3

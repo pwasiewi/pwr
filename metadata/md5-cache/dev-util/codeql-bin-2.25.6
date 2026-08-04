@@ -1,0 +1,11 @@
+BDEPEND=app-arch/unzip
+DEFINED_PHASES=install postinst
+DESCRIPTION=GitHub CodeQL static analysis CLI — prebuilt binary with bundled query packs
+EAPI=8
+HOMEPAGE=https://github.com/github/codeql-cli-binaries
+KEYWORDS=-* ~amd64
+LICENSE=all-rights-reserved MIT
+RESTRICT=bindist mirror strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/github/codeql-cli-binaries/releases/download/v2.25.6/codeql-linux64.zip -> codeql-bin-2.25.6-linux-amd64.zip )
+_md5_=6f7dd8e5060adc16d70c1fa5c9df45dc

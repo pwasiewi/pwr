@@ -11,4 +11,4 @@ PROPERTIES=live live
 RDEPEND=!static? ( sys-libs/zlib:= lz4? ( app-arch/lz4:= ) lzma? ( app-arch/xz-utils:= ) lzo? ( dev-libs/lzo:= ) xattr? ( sys-apps/attr:= ) xz? ( app-arch/xz-utils:= ) zstd? ( >=app-arch/zstd-1.0:= ) )
 SLOT=0
 _eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	git-r3	2f8cdb10b033f92c3136aa6488a31c98
-_md5_=fc28dd251cf2a6871ba20b1784af3365
+_md5_=31e384c0a7fbdb9063b08b499f28f92d

@@ -1,0 +1,11 @@
+BDEPEND=net-misc/curl
+DEFINED_PHASES=install unpack
+DESCRIPTION=The open source AI coding agent
+EAPI=8
+HOMEPAGE=https://opencode.ai https://github.com/anomalyco/opencode
+IUSE=cpu_flags_x86_avx2
+LICENSE=MIT
+PROPERTIES=live
+RESTRICT=mirror strip
+SLOT=0
+_md5_=434316464e64cd5e37fd4034ea9393f4

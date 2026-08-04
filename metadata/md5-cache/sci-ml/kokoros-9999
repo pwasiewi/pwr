@@ -1,0 +1,14 @@
+BDEPEND=|| ( >=dev-lang/rust-1.85 >=dev-lang/rust-bin-1.85 ) virtual/pkgconfig >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile install postinst unpack
+DEPEND=app-accessibility/espeak-ng media-libs/libogg:= media-libs/opus:= media-libs/pcaudiolib media-libs/sonic media-sound/lame:=
+DESCRIPTION=Kokoro-82M TTS server in Rust (CPU; OpenAI-compatible HTTP API)
+EAPI=8
+HOMEPAGE=https://github.com/lucasjinreal/Kokoros
+INHERIT=git-r3
+LICENSE=Apache-2.0
+PROPERTIES=live live
+RDEPEND=app-accessibility/espeak-ng media-libs/libogg:= media-libs/opus:= media-libs/pcaudiolib media-libs/sonic media-sound/lame:=
+RESTRICT=network-sandbox
+SLOT=0
+_eclasses_=git-r3	2f8cdb10b033f92c3136aa6488a31c98
+_md5_=53e83cb28359d9d394ba15ff80e37018

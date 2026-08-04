@@ -1,0 +1,18 @@
+BDEPEND=>=dev-build/cmake-3.12 virtual/pkgconfig system-llamacpp? ( app-misc/jq ) system-whispercpp? ( app-misc/jq ) system-sdcpp? ( app-misc/jq ) system-kokoro? ( app-misc/jq ) webui? ( net-libs/nodejs[npm] ) tauri? ( net-libs/nodejs[npm] || ( dev-lang/rust dev-lang/rust-bin ) ) app-alternatives/ninja >=dev-build/cmake-3.28.5 virtual/pkgconfig
+DEFINED_PHASES=compile configure install postinst prepare test
+DEPEND=app-arch/brotli:= app-arch/zstd:= >=dev-cpp/cli11-2.4.2 >=dev-cpp/cpp-httplib-0.26.0 >=dev-cpp/nlohmann_json-3.11.3 >=net-libs/libwebsockets-4.3.3 >=net-misc/curl-8.5.0 sys-libs/libcap x11-libs/libdrm[video_cards_amdgpu] acct-user/lemonade acct-group/lemonade system-fastflowlm? ( sci-ml/fastflowlm ) system-llamacpp? ( sci-misc/llama-cpp ) system-whispercpp? ( app-accessibility/whisper-cpp ) system-sdcpp? ( sci-misc/stable-diffusion-cpp ) system-kokoro? ( sci-ml/kokoros ) system-rocm? ( dev-util/hip ) system-therock? ( >=dev-util/therock-bin-7.13.0 <dev-util/therock-bin-7.14 ) webui? ( app-misc/jq x11-misc/xdg-utils ) tauri? ( net-libs/webkit-gtk:4.1 x11-libs/gtk+:3 net-libs/libsoup:3.0 )
+DESCRIPTION=Local AI server: optimized LLM inference on AMD NPU + GPU
+EAPI=8
+HOMEPAGE=https://lemonade-server.ai/ https://github.com/lemonade-sdk/lemonade
+INHERIT=cmake desktop systemd
+IUSE=openrc system-fastflowlm system-kokoro system-llamacpp system-rocm system-sdcpp system-therock system-whispercpp systemd tauri webui
+KEYWORDS=~amd64
+LICENSE=Apache-2.0
+PROPERTIES=live
+RDEPEND=app-arch/brotli:= app-arch/zstd:= >=dev-cpp/cli11-2.4.2 >=dev-cpp/cpp-httplib-0.26.0 >=dev-cpp/nlohmann_json-3.11.3 >=net-libs/libwebsockets-4.3.3 >=net-misc/curl-8.5.0 sys-libs/libcap x11-libs/libdrm[video_cards_amdgpu] acct-user/lemonade acct-group/lemonade system-fastflowlm? ( sci-ml/fastflowlm ) system-llamacpp? ( sci-misc/llama-cpp ) system-whispercpp? ( app-accessibility/whisper-cpp ) system-sdcpp? ( sci-misc/stable-diffusion-cpp ) system-kokoro? ( sci-ml/kokoros ) system-rocm? ( dev-util/hip ) system-therock? ( >=dev-util/therock-bin-7.13.0 <dev-util/therock-bin-7.14 ) webui? ( app-misc/jq x11-misc/xdg-utils ) tauri? ( net-libs/webkit-gtk:4.1 x11-libs/gtk+:3 net-libs/libsoup:3.0 )
+REQUIRED_USE=?? ( system-rocm system-therock )
+RESTRICT=network-sandbox
+SLOT=0
+SRC_URI=https://github.com/lemonade-sdk/lemonade/archive/refs/tags/v11.5.0.tar.gz -> lemonade-11.5.0.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	c54f532543a549f7318d6c49aaf8e953	desktop	e447b5f77146d69797e9f03ff177f3f1	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=9f141768c3351c53921bcb3ed39f5cbd

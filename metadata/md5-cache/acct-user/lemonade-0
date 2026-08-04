@@ -1,0 +1,9 @@
+DEFINED_PHASES=install postinst preinst prerm pretend
+DESCRIPTION=A user for lemonade
+EAPI=8
+INHERIT=acct-user
+KEYWORDS=~amd64
+RDEPEND=acct-group/lemonade
+SLOT=0
+_eclasses_=user-info	d7c261c6f7c2392145e8789913f1bf7e	acct-user	1b9e4658c5fbc274cbc9b660590e8c2e
+_md5_=e599938dcfeb855a9e929ce3036a9e3a

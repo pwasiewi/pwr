@@ -1,0 +1,17 @@
+BDEPEND=>=dev-build/cmake-3.22 dev-build/ninja || ( dev-lang/rust dev-lang/rust-bin ) app-alternatives/ninja >=dev-build/cmake-3.28.5 virtual/pkgconfig
+DEFINED_PHASES=compile configure install postinst prepare test unpack
+DEPEND=dev-util/xrt dev-libs/xdna-driver dev-libs/xrt-xdna media-video/ffmpeg:= net-misc/curl:= dev-libs/boost:= sci-libs/fftw:3.0= sys-libs/readline:=
+DESCRIPTION=NPU-first LLM runtime for AMD Ryzen AI (XDNA2) processors
+EAPI=8
+HOMEPAGE=https://fastflowlm.com/ https://github.com/FastFlowLM/FastFlowLM
+INHERIT=cmake systemd
+IUSE=openrc systemd
+KEYWORDS=~amd64
+LICENSE=MIT FastFlowLM-Binary
+PROPERTIES=live
+RDEPEND=dev-util/xrt dev-libs/xdna-driver dev-libs/xrt-xdna media-video/ffmpeg:= net-misc/curl:= dev-libs/boost:= sci-libs/fftw:3.0= sys-libs/readline:=
+RESTRICT=network-sandbox
+SLOT=0
+SRC_URI=https://github.com/FastFlowLM/FastFlowLM/archive/refs/tags/v0.9.44.tar.gz -> fastflowlm-0.9.44.tar.gz https://github.com/mlc-ai/tokenizers-cpp/archive/acbdc5a27ae01ba74cda756f94da698d40f11dfe.tar.gz -> tokenizers-cpp-acbdc5a27ae01ba74cda756f94da698d40f11dfe.tar.gz https://github.com/google/sentencepiece/archive/11051e3b73b3a6222a52acd720e39805dc7545ab.tar.gz -> sentencepiece-11051e3b73b3a6222a52acd720e39805dc7545ab.tar.gz https://github.com/msgpack/msgpack-c/archive/092bc69b6e815980bce7808595c914dd3a29f905.tar.gz -> msgpack-c-092bc69b6e815980bce7808595c914dd3a29f905.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	c54f532543a549f7318d6c49aaf8e953	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=ec39c4cf66023b1d708be213ab5b3cd7

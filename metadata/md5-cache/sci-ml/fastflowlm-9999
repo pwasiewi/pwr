@@ -1,0 +1,15 @@
+BDEPEND=>=dev-build/cmake-3.22 dev-build/ninja || ( dev-lang/rust dev-lang/rust-bin ) app-alternatives/ninja >=dev-build/cmake-3.28.5 >=dev-vcs/git-1.8.2.1[curl] virtual/pkgconfig
+DEFINED_PHASES=compile configure install postinst prepare test unpack
+DEPEND=dev-util/xrt dev-libs/xdna-driver dev-libs/xrt-xdna media-video/ffmpeg:= net-misc/curl:= dev-libs/boost:= sci-libs/fftw:3.0= sys-libs/readline:=
+DESCRIPTION=NPU-first LLM runtime for AMD Ryzen AI (XDNA2) processors
+EAPI=8
+HOMEPAGE=https://fastflowlm.com/ https://github.com/FastFlowLM/FastFlowLM
+INHERIT=cmake git-r3 systemd
+IUSE=openrc systemd
+LICENSE=MIT FastFlowLM-Binary
+PROPERTIES=live live
+RDEPEND=dev-util/xrt dev-libs/xdna-driver dev-libs/xrt-xdna media-video/ffmpeg:= net-misc/curl:= dev-libs/boost:= sci-libs/fftw:3.0= sys-libs/readline:=
+RESTRICT=network-sandbox
+SLOT=0
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	c54f532543a549f7318d6c49aaf8e953	git-r3	2f8cdb10b033f92c3136aa6488a31c98	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=d3cb51667c5c349dc9943dd038115977
