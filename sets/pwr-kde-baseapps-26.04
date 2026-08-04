@@ -1,0 +1,7 @@
+# Copy of ::kde's 'kde-baseapps-26.04' set, taken 2026-08-04.
+# Bump together with the KDE Gear version in the xp profiles that use it.
+<kde-apps/kdialog-26.04.50
+<kde-apps/keditbookmarks-26.04.50
+<kde-apps/kfind-26.04.50
+<kde-apps/konqueror-26.04.50
+<www-client/falkon-26.04.50
