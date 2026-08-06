@@ -1,0 +1,17 @@
+--- a/pci_ids/pci_ids.h	2026-08-06 07:29:59.542904295 +0200
++++ b/pci_ids/pci_ids.h	2026-08-06 07:29:59.559154161 +0200
+@@ -575,6 +575,7 @@
+ #define GAINWARD_RTX_3090TI_PHANTOM                             0xF295
+ #define GAINWARD_RTX_4070_GHOST_SUB_DEV                         0xF303
+ #define GAINWARD_RTX_4080_PHANTOM_GS_SUB_DEV                    0xF297
++#define GAINWARD_RTX_5070TI_PHOENIX_SUB_DEV                     0xF323
+ 
+ /*-----------------------------------------------------*\
+ | GALAX / KFA2 Sub-Device IDs                           |
+--- a/Controllers/GainwardGPUController/GainwardGPUControllerDetect.cpp	2026-08-06 07:29:59.556713220 +0200
++++ b/Controllers/GainwardGPUController/GainwardGPUControllerDetect.cpp	2026-08-06 07:29:59.559154161 +0200
+@@ -100,3 +100,4 @@
+ REGISTER_I2C_PCI_DETECTOR("Gainward GeForce RTX 3090 Phoenix",          DetectGainwardGPUControllers,   NVIDIA_VEN, NVIDIA_RTX3090_DEV,     GAINWARD_SUB_VEN,   NVIDIA_RTX3090_DEV,             0x49);
+ REGISTER_I2C_PCI_DETECTOR("Gainward GeForce RTX 3090 Ti Phantom",       DetectGainwardGPUControllers,   NVIDIA_VEN, NVIDIA_RTX3090TI_DEV,   GAINWARD_SUB_VEN,   GAINWARD_RTX_3090TI_PHANTOM,    0x49);
+ REGISTER_I2C_PCI_DETECTOR("Gainward GeForce RTX 4080 Phantom GS",       DetectGainwardGPUControllers,   NVIDIA_VEN, NVIDIA_RTX4080_DEV,     GAINWARD_SUB_VEN,   GAINWARD_RTX_4080_PHANTOM_GS_SUB_DEV,   0x49);
++REGISTER_I2C_PCI_DETECTOR("Gainward GeForce RTX 5070 Ti Phoenix",       DetectGainwardGPUControllers,   NVIDIA_VEN, NVIDIA_RTX5070TI_DEV,   GAINWARD_SUB_VEN,   GAINWARD_RTX_5070TI_PHOENIX_SUB_DEV,    0x49);

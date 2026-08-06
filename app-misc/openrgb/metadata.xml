@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Live fork of ::gentoo's openrgb-9999: drops the stale udev-check patch
+    (obsolete on merged-usr, no longer applies to master) and carries the
+    Gainward GeForce RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323)
+    until it lands upstream.
+  </longdescription>
+  <upstream>
+    <remote-id type="gitlab">CalcProgrammer1/OpenRGB</remote-id>
+  </upstream>
+</pkgmetadata>
