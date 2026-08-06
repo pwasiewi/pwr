@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Live (9999) fork of ::gentoo's lynis: tracks upstream master for new
+    audit tests between releases. Carries the tree's Gentoo patch
+    (os-release quoting, builtin-nftables detection, EFI kernel paths),
+    which is not merged upstream.
+  </longdescription>
+  <use>
+    <flag name="cron">Install the daily cron job</flag>
+  </use>
+  <upstream>
+    <remote-id type="github">CISOfy/lynis</remote-id>
+  </upstream>
+</pkgmetadata>

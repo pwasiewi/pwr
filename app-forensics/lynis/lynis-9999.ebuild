@@ -1,0 +1,78 @@
+# Copyright 1999-2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# Live version of ::gentoo's lynis-3.1.7-r1 (2026-08-06): upstream master gets
+# new tests/detections between the infrequent releases and lynis is a pure
+# shell-script install, so tracking HEAD is cheap. Keeps the tree's Gentoo
+# patch (os-release quoting, builtin-nftables detection, /boot/EFI/Gentoo
+# kernel paths) — verified NOT merged upstream and still applying to master.
+
+EAPI="8"
+
+inherit git-r3 shell-completion systemd
+
+DESCRIPTION="Security and system auditing tool"
+HOMEPAGE="https://cisofy.com/lynis/"
+EGIT_REPO_URI="https://github.com/CISOfy/lynis.git"
+
+LICENSE="GPL-3"
+SLOT="0"
+IUSE="+cron systemd"
+
+RDEPEND="
+	app-shells/bash
+	cron? ( !systemd? ( virtual/cron ) )"
+
+PATCHES=(
+	"${FILESDIR}/${PN}-3.1-gentoo.patch"
+)
+
+src_install() {
+	doman lynis.8
+	dodoc FAQ README
+	newdoc CHANGELOG.md CHANGELOG
+
+	# Remove the old one during the next stabilize progress
+	exeinto /etc/cron.daily
+	newexe "${FILESDIR}"/lynis.cron-new lynis
+
+	dobashcomp extras/bash_completion.d/lynis
+
+	# stricter default perms - bug 507436
+	diropts -m0700
+	insopts -m0600
+
+	insinto /usr/share/${PN}
+	doins -r db/ include/ plugins/
+
+	dosbin lynis
+
+	insinto /etc/${PN}
+	doins default.prf
+	sed -i -e 's/\/path\/to\///' "${S}/extras/systemd/${PN}.service" || die "Sed Failed!"
+	systemd_dounit "${S}/extras/systemd/${PN}.service" || die "Sed Failed!"
+	systemd_dounit "${S}/extras/systemd/${PN}.timer"
+
+	if ! use cron; then
+		ebegin "removing cron files from installation image"
+		rm -rfv "${ED}/etc/cron.daily" || die
+		eend "$?"
+	fi
+}
+
+pkg_postinst() {
+	if use cron; then
+		if systemd_is_booted || has_version sys-apps/systemd; then
+			echo
+			ewarn "Both 'cron' and 'systemd' flags are enabled."
+			ewarn "So both ${PN}.target and cron files were installed."
+			ewarn "Please don't use 2 implementations at the same time."
+			ewarn "Cronjobs are usually enabled by default via /etc/cron.* jobs"
+			ewarn "If you want to use systemd ${PN}.target timers"
+			ewarn "disable 'cron' flag and reinstall ${PN}"
+			echo
+		else
+			einfo "A cron script has been installed to ${ROOT}/etc/cron.daily/lynis."
+		fi
+	fi
+}
