@@ -3,7 +3,11 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_12 )
+# python-any-r1 is only the test-dep broker (dev-python/xcffib), but its
+# pkg_setup dies when no PYTHON_COMPAT implementation is installed at all —
+# the amdkdehard image carries only 3.13/3.14, so a bare python3_12 pin
+# aborted the merge before meson ever ran (2026-08-07).
+PYTHON_COMPAT=( python3_{12..14} )
 inherit git-r3 meson python-any-r1 virtualx xdg
 
 DESCRIPTION="A lightweight compositor for X11 (previously a compton fork)"
