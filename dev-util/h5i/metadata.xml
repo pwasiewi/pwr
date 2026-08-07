@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		h5i gives an AI coding agent a disposable, policy-enforced environment
+		— workspace, shell, dependencies, dev server and browser inside one
+		security boundary — and produces reviewable patches and execution logs
+		showing what changed, what ran and what was denied. It is local-first:
+		no hosted sandbox and no SaaS account.
+
+		Five confinement tiers, strongest last: workspace (a separate git
+		worktree, no confinement), process (Landlock filesystem allowlist,
+		seccomp deny-list, namespaces, rlimits), supervised (adds a private
+		network namespace with an nftables egress allowlist and DNS pinning),
+		container (rootless Podman, read-only rootfs, dropped capabilities)
+		and microvm (a hardware-isolated guest with its own kernel).
+
+		h5i never silently downgrades: a request it cannot satisfy fails
+		closed, so the process and supervised tiers need a kernel with
+		CONFIG_SECURITY_LANDLOCK=y that also lists landlock in CONFIG_LSM.
+	</longdescription>
+	<use>
+		<flag name="web">
+			Build the <pkg>dev-util/h5i</pkg> box console (<code>h5i ui</code>):
+			an axum server plus a React bundle embedded into the binary. Needs
+			a Node toolchain at build time.
+		</flag>
+		<flag name="containers">
+			Pull in <pkg>app-containers/podman</pkg> for the rootless
+			container confinement tier.
+		</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">h5i-dev/h5i</remote-id>
+	</upstream>
+</pkgmetadata>
