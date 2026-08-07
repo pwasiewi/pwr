@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		Cisco Secure Client, the product formerly sold as AnyConnect, is a
+		proprietary SSL and IPsec/IKEv2 VPN client. This package carries the
+		core VPN module only — no Network Visibility, ISE posture, Umbrella or
+		AMP components.
+
+		The installer is not publicly downloadable: it comes from
+		software.cisco.com behind an account with an entitled service contract,
+		so RESTRICT=fetch applies and the .sh has to be staged in DISTDIR by
+		hand. The ebuild unpacks that self-extracting archive and installs its
+		payload directly, instead of running the vendor's vpn_install.sh, which
+		writes outside the image root and enables the service itself.
+	</longdescription>
+	<use>
+		<flag name="gui">
+			Install vpnui, the GTK3 connection window, together with its
+			desktop entry and icons. Without it the client is driven entirely
+			through the <code>vpn</code> command-line tool.
+		</flag>
+		<flag name="webkit">
+			Install acwebhelper, the embedded browser used for SAML/SSO
+			authentication. This is the only binary in the package that links
+			<pkg>net-libs/webkit-gtk</pkg>:4, and it is independent of
+			<code>gui</code> — vpnui itself is plain GTK3. Disabling it leaves
+			SAML logins to acextwebhelper, which opens the desktop browser
+			instead.
+		</flag>
+	</use>
+</pkgmetadata>
