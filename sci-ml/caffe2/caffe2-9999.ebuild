@@ -152,7 +152,10 @@ DEPEND="
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.5.1-unbundle_fmt.patch.xz
 	"${FILESDIR}"/${PN}-2.5.1-unbundle_kineto.patch.xz
-	"${FILESDIR}"/${PN}-2.8.0-unbundle_pocketfft.patch.xz
+	# 9999-only: pytorch HEAD renamed ${Torch_SOURCE_DIR} to
+	# ${CMAKE_SOURCE_DIR} in the PocketFFT block, so the 2.8.0 patch that the
+	# released ebuilds still use no longer applies here.
+	"${FILESDIR}"/${PN}-9999-unbundle_pocketfft.patch.xz
 	"${FILESDIR}"/${PN}-2.5.1-cudnn_include_fix.patch.xz
 	"${FILESDIR}"/${PN}-2.4.0-cpp-httplib.patch.xz
 	"${FILESDIR}"/${PN}-2.7.0-glog-0.7.1.patch.xz
@@ -160,7 +163,10 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-2.8.0-rocm-minus-flash.patch.xz
 	"${FILESDIR}"/${PN}-2.12.0-rocm-distributed-link.patch.xz
 	"${FILESDIR}"/${PN}-2.9.1-torch_cpu.patch.xz
-	"${FILESDIR}"/${PN}-2.10.0-gentoo.patch.xz
+	# 9999-only: upstream inserted the CUPTI/perfetto block where this hunk's
+	# trailing context used to be (install(DIRECTORY ...)), in caffe2/
+	# CMakeLists.txt. Identical to the 2.10.0 patch otherwise.
+	"${FILESDIR}"/${PN}-9999-gentoo.patch.xz
 	"${FILESDIR}"/${PN}-2.11.0-mimalloc.patch.xz
 	# 9999-specific (not the shared 2.12.0 file, which stays frozen for the
 	# pinned v2.12.0/2.12.1 tag builds): live HEAD added XPU_RUNTIME/
