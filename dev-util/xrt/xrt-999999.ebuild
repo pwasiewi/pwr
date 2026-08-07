@@ -17,6 +17,12 @@ if [[ ${PV} == 999999 ]] ; then
 		src/runtime_src/core/common/elf
 		src/runtime_src/xdp
 		src/runtime_src/core/common/aiebu/src/cpp/ELFIO
+		# XDP moved the AIE register headers into a nested submodule
+		# (2026-08: generates aie_codegen.h into the build dir; without it
+		# every xdp_aie_* plugin dies at '#include <aie_codegen.h>').
+		# git-r3 matches nested submodules by full path from the root.
+		src/runtime_src/xdp/aie-codegen
+		src/runtime_src/xdp/aie-codegen/aie-regdb
 	)
 	inherit git-r3
 else
