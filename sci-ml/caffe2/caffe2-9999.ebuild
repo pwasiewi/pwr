@@ -14,10 +14,19 @@ MYPN=pytorch
 CK_COMMIT=7fe50dc3da2069d6645d9deb8c017a876472a977
 CK_P=composable_kernel-${CK_COMMIT:0:8}
 
-FLASH_PV=2.7.4
-FLASH_PN=flash-attention
-FLASH_P=${FLASH_PN}-${FLASH_PV}
-FLASH_ATT_URI="https://github.com/Dao-AILab/${FLASH_PN}/archive/refs/tags/v${FLASH_PV}.tar.gz -> ${FLASH_P}.gh.tar.gz"
+# NOTE (2026-08-07): unlike the released ebuilds, -9999 does NOT substitute a
+# fixed flash-attention tarball. The versioned ebuilds pin FLASH_PV=2.7.4
+# because a given pytorch release expects exactly that API; git HEAD does not.
+# flash-attention changed Flash_fwd_params::philox_args from
+#   at::PhiloxCudaState philox_args;   (<=2.7.4, an ATen value)
+# to
+#   uint64_t philox_args[4];           (raw storage, decoupled from ATen)
+# and HEAD's flash_api.cpp placement-news into it:
+#   new (params.philox_args) at::PhiloxCudaState(philox_state);
+# which against 2.7.4 fails with "no matching function for call to
+# operator new(sizetype, at::PhiloxCudaState&)".
+# The authoritative pairing is pytorch's own submodule gitlink, which git-r3
+# already checks out — so just use it and let the pin travel with the commit.
 
 DESCRIPTION="A deep learning framework"
 HOMEPAGE="https://pytorch.org/"
@@ -27,10 +36,6 @@ SRC_URI="
 	rocm? (
 		https://github.com/ROCm/composable_kernel/archive/${CK_COMMIT}.tar.gz
 		-> ${CK_P}.tar.gz
-	)
-	cuda? (
-		flash? ( ${FLASH_ATT_URI} )
-		memefficient? ( ${FLASH_ATT_URI} )
 	)
 "
 
@@ -209,12 +214,9 @@ src_prepare() {
 		PATCHES[i]="${T}/patches/${b%.xz}"
 	done
 
-	if use cuda && ( use flash || use memefficient ); then
-		# git-r3 already checked out the flash-attention submodule; replace it
-		# with the pinned tarball version the ebuild specifies
-		rm -rf third_party/${FLASH_PN} || die
-		mv "${WORKDIR}"/${FLASH_P} third_party/${FLASH_PN} || die
-	fi
+	# No flash-attention tarball swap here — see the SRC_URI note above.
+	# git-r3 leaves third_party/flash-attention at the gitlink pytorch HEAD
+	# pins, which is the only version its flash_api.cpp compiles against.
 	filter-lto #bug 862672
 
 	# Unbundle fmt — remove link suffix and any target_compile_definitions on
