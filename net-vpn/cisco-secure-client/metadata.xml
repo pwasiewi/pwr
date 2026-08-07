@@ -24,6 +24,13 @@
 			desktop entry and icons. Without it the client is driven entirely
 			through the <code>vpn</code> command-line tool.
 		</flag>
+		<flag name="telemetry">
+			Install libacfeedback.so, the Customer Experience Feedback plugin,
+			which reports usage data back to Cisco. Off by default. Omitting it
+			is a vendor-supported configuration — the stock installer deletes
+			the same file when a deployment sets
+			DisableCustomerExperienceFeedback in ACTransforms.xml.
+		</flag>
 		<flag name="webkit">
 			Install acwebhelper, the embedded browser used for SAML/SSO
 			authentication. This is the only binary in the package that links

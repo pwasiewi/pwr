@@ -17,7 +17,7 @@ LICENSE="Cisco-EULA"
 SLOT="0"
 KEYWORDS="-* ~amd64"
 
-IUSE="+gui +webkit"
+IUSE="+gui telemetry +webkit"
 
 # The installer is only downloadable from software.cisco.com behind a Cisco
 # account with an entitled service contract, so Portage cannot fetch it and it
@@ -109,7 +109,15 @@ src_install() {
 
 	# --- plugins -------------------------------------------------------
 	exeinto "${instprefix}"/bin/plugins
-	doexe libacdownloader.so libacfeedback.so libacwebhelper.so libvpnipsec.so
+	doexe libacdownloader.so libacwebhelper.so libvpnipsec.so
+
+	# libacfeedback.so is the Customer Experience Feedback plugin: it posts
+	# usage data back to Cisco and creates ${INSTPREFIX}/CustomerExperienceFeedback
+	# at run time. Leaving it out is a configuration the vendor supports —
+	# vpn_install.sh does exactly this 'rm -f' when a deployment's
+	# ACTransforms.xml sets DisableCustomerExperienceFeedback, so this is not
+	# a modification of the product, just the same choice made at build time.
+	use telemetry && doexe libacfeedback.so
 
 	# --- executables ---------------------------------------------------
 	exeinto "${instprefix}"/bin
@@ -218,6 +226,16 @@ pkg_postinst() {
 	elog "  /opt/cisco/secureclient/bin/vpn connect <host>   (CLI)"
 	use gui && elog "  /opt/cisco/secureclient/bin/vpnui                 (GUI)"
 	elog
+	if ! use telemetry; then
+		# The plugin is gone, but a previous hand-run of the vendor
+		# installer leaves this behind and portage does not own it.
+		if [[ -d ${instprefix}/CustomerExperienceFeedback ]]; then
+			ewarn "Leftover ${instprefix}/CustomerExperienceFeedback found."
+			ewarn "It is not owned by this package — remove it by hand if"
+			ewarn "you want no collected data left on disk."
+		fi
+	fi
+
 	if ! use webkit; then
 		elog "Built with USE=-webkit: the embedded SAML/SSO browser is not"
 		elog "installed. Headends that use SAML will fall back to opening"
