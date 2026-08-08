@@ -3,11 +3,27 @@
 
 EAPI=8
 
-DISTUTILS_USE_PEP517=setuptools
+# Upstream moved to scikit-build-core (PEP 517) — setup.py is a stub and the
+# whole tools/setup_helpers machinery (env.py, cmake.py) is gone, taking the
+# old develop+sdist packaging flow and the BUILD_DIR sed with it (2026-08-08).
+#
+# The DIVISION OF LABOUR is unchanged: caffe2-9999 builds and installs ALL
+# compiled artifacts (libtorch, torch/_C.*.so, the .pyi stubs, torch/include)
+# from its cmake tree in /var/lib/caffe2 — this package ships the pure-python
+# half only (torch/, torchgen/, functorch/ + the torchrun/torchfrtrace entry
+# points; on the previous flow it installed zero .so files). Hence
+# wheel.cmake=false in src_prepare: scikit-build-core packs the three package
+# trees upstream lists in [tool.scikit-build.wheel] without ever running
+# cmake — nothing rebuilds, nothing writes outside the sandbox, and the old
+# dontbuildagain.patch (which cut build_pytorch() out of the big setup.py for
+# the same reason) is obsolete.
+#
+# Requires >=dev-python/scikit-build-core-1.0 (upstream's declared floor: the
+# [tool.scikit-build.env] table and dynamic-metadata need it).
+DISTUTILS_USE_PEP517=scikit-build-core
 PYTHON_COMPAT=( python3_{11..14} )
 DISTUTILS_SINGLE_IMPL=1
-DISTUTILS_EXT=1
-inherit distutils-r1 git-r3 prefix
+inherit distutils-r1 git-r3
 
 DESCRIPTION="Tensors and Dynamic neural networks in Python (live)"
 HOMEPAGE="https://pytorch.org/"
@@ -45,7 +61,6 @@ DEPEND="${RDEPEND}
 # Version-prefixed patches track the latest stable base; if a HEAD bump breaks
 # them, refresh the patch (and bump the prefix) — same policy as caffe2-9999.
 PATCHES=(
-	"${FILESDIR}"/${PN}-2.9.0-dontbuildagain.patch
 	"${FILESDIR}"/${PN}-2.10.0-cpp-extension-multilib.patch
 )
 
@@ -58,27 +73,20 @@ src_prepare() {
 	sed -e "s|%LIB_DIR%|$(get_libdir)|g" \
 		-i torch/utils/cpp_extension.py || die
 
-	# Set build dir for pytorch's setup — reuse caffe2's cmake cache
-	sed -e "/BUILD_DIR/s|build|/var/lib/caffe2/|" \
-		-i tools/setup_helpers/env.py || die
-
-	# Drop legacy from pyproject.toml
-	sed -e "/build-backend/s|:__legacy__||" \
+	# Packaging-only wheel: the compiled half is caffe2's job (see the
+	# header). Written INTO the [tool.scikit-build.wheel] section — a
+	# top-level 'wheel.cmake' dotted key would pre-declare the table and
+	# TOML forbids the section header re-opening it ("Cannot declare twice").
+	sed -e '/^\[tool\.scikit-build\.wheel\]$/a cmake = false' \
 		-i pyproject.toml || die
+	grep -q '^cmake = false$' pyproject.toml ||
+		die "pyproject.toml drifted — could not disable the cmake half of the wheel"
 
 	distutils-r1_src_prepare
-
-	hprefixify tools/setup_helpers/env.py
 }
 
 python_compile() {
-	PYTORCH_BUILD_VERSION=${PV} \
-	PYTORCH_BUILD_NUMBER=0 \
-	USE_SYSTEM_LIBS=ON \
-	CMAKE_BUILD_DIR="${BUILD_DIR}" \
-	distutils-r1_python_compile develop sdist
-}
-
-python_install() {
-	USE_SYSTEM_LIBS=ON distutils-r1_python_install
+	# Read by the dynamic-metadata version provider (tools/metadata/version)
+	local -x PYTORCH_BUILD_VERSION=${PV} PYTORCH_BUILD_NUMBER=0
+	distutils-r1_python_compile
 }
