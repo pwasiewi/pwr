@@ -79,9 +79,15 @@ python_compile() {
 	# cpp_extension never reads LDFLAGS itself, so the only cost is the python
 	# extension linking without -O1/--as-needed/pack-relative-relocs — cosmetic
 	# for a bundle that dlopens anyway.
+	# NVCCFLAGS as well (2026-08-08): cuda_sanitize already baked the poisoned
+	# CXXFLAGS into `--compiler-options "..."` back in src_prepare — on this
+	# image portage-bashrc-mv's 10-flag.sh appends LDFLAGS to C/CXXFLAGS for
+	# every package unless package.cflags says NOLDADD (harmless for gcc,
+	# fatal inside nvcc's comma-split --compiler-options). Scrubbing the env
+	# vars alone is too late; the baked string needs the same treatment.
 	local _fvar
-	for _fvar in CFLAGS CXXFLAGS CPPFLAGS LDFLAGS; do
-		export ${_fvar}="$(sed 's/-Wl,[^ ]*//g' <<<"${!_fvar}")"
+	for _fvar in CFLAGS CXXFLAGS CPPFLAGS LDFLAGS NVCCFLAGS; do
+		export ${_fvar}="$(sed 's/-Wl,[^ "]*//g' <<<"${!_fvar}")"
 	done
 
 	export FORCE_CUDA=0
