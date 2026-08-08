@@ -75,8 +75,10 @@ BDEPEND+="
 	")
 "
 
+# Live-only refresh: upstream fixed the platform_virtio.cpp VLA itself;
+# the snapshot patch is kept untouched for xrt-xdna-2.21.75-r1.
 PATCHES=(
-	"${FILESDIR}"/${PN}-0_p20251025-fix-clang.patch
+	"${FILESDIR}"/${PN}-999999-fix-clang.patch
 )
 
 CONFIG_CHECK="~AMD_IOMMU ~DRM_ACCEL"
