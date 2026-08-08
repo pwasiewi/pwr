@@ -90,7 +90,10 @@ src_unpack() {
 		git-r3_src_unpack
 
 		pushd "${S}" || die
-		local VTD_HASH=$(grep -oP 'VTD/raw/\K[0-9a-f]+' tools/info.json | head -n1)
+		# Upstream moved the VTD pin from tools/info.json (VTD/raw/<hash>
+		# URLs) to tools/WHENCE ("# vtd-commit: <hash>") — accept either.
+		local VTD_HASH=$(grep -oPsh 'vtd-commit:\s*\K[0-9a-f]+|VTD/raw/\K[0-9a-f]+' \
+			tools/WHENCE tools/info.json | head -n1)
 		[[ "${VTD_HASH}" == "" ]] && die "Failed to extract VTD hash"
 
 		local VTD_FILES=(
