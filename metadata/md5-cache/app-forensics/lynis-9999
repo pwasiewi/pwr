@@ -1,0 +1,13 @@
+BDEPEND=>=dev-vcs/git-1.8.2.1[curl] virtual/pkgconfig
+DEFINED_PHASES=install postinst unpack
+DESCRIPTION=Security and system auditing tool
+EAPI=8
+HOMEPAGE=https://cisofy.com/lynis/
+INHERIT=git-r3 shell-completion systemd
+IUSE=+cron systemd
+LICENSE=GPL-3
+PROPERTIES=live
+RDEPEND=app-shells/bash cron? ( !systemd? ( virtual/cron ) )
+SLOT=0
+_eclasses_=git-r3	2f8cdb10b033f92c3136aa6488a31c98	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	shell-completion	63a62de3ca49c798ee6e89f190e45d0e	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=0dfec8d3e20089e9346226e59ea24b40

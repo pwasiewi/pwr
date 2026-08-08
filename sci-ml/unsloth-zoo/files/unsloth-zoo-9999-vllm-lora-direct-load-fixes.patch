@@ -1,40 +1,21 @@
-# Two defects in the vLLM direct LoRA hot-load path (GRPO fast_inference).
+# One remaining defect in the vLLM direct LoRA hot-load path (GRPO
+# fast_inference).
 #
-# 1. prepare_vllm_lora_loading: gate_proj lora_A/lora_B are appended TWICE for
-#    the gate_up stacked slots — up_proj adapter weights never reach vLLM, so
-#    rollouts silently run with gate weights duplicated into the up slot
-#    (policy mismatch between the rollout engine and the trained model) for
-#    every unfused-MLP architecture (Llama/Qwen-style) with LoRA on gate+up.
+# (The former first half of this patch — gate_proj lora_A/lora_B appended
+# TWICE for the gate_up stacked slots, up_proj weights never reaching vLLM —
+# was merged upstream verbatim, "mlp.  up_proj" spacing and all; dropped here
+# 2026-08-08 when the stale hunks began failing against HEAD.)
 #
-# 2. load_lora_directly: `vllm_lora_B.copy_(model_lora_B); vllm_lora_B *= s`
-#    corrupts the TRAINING weights when the vLLM slot aliases the training
-#    tensor (zero-copy): copy_ is a self-copy no-op and the in-place scale
-#    compounds (x s^8 per optimizer step observed on Phi-4-mini, 2026-07-24 —
-#    "bug (c)": rollouts rot coherent -> gibberish -> token loops in ~5 steps).
-#    No scaling scheme is correct on a shared buffer, so raise loudly and
-#    require lora_alpha == lora_rank (s == 1) instead of corrupting silently.
---- a/unsloth_zoo/vllm_utils.py	2026-07-24 21:35:14.258727572 +0200
-+++ b/unsloth_zoo/vllm_utils.py	2026-07-24 21:35:14.276316881 +0200
-@@ -2792,7 +2792,7 @@
-         vllm_loras_B .append((v_layer.self_attn.o_proj.lora_b_stacked[0], so,))
- 
-         model_loras_A.append(m_layer.mlp.gate_proj.lora_A.default.weight)
--        model_loras_A.append(m_layer.mlp.gate_proj.lora_A.default.weight)
-+        model_loras_A.append(m_layer.mlp.  up_proj.lora_A.default.weight)
-         vllm_loras_A .append(v_layer.mlp.gate_up_proj.lora_a_stacked[0])
-         vllm_loras_A .append(v_layer.mlp.gate_up_proj.lora_a_stacked[1])
- 
-@@ -2801,7 +2801,7 @@
-         sg = None if sg == 1.0 else sg
-         su = None if su == 1.0 else su
-         model_loras_B.append( m_layer.mlp.gate_proj.lora_B.default.weight)
--        model_loras_B.append( m_layer.mlp.gate_proj.lora_B.default.weight)
-+        model_loras_B.append( m_layer.mlp.  up_proj.lora_B.default.weight)
-         vllm_loras_B .append((v_layer.mlp.gate_up_proj.lora_b_stacked[0], sg,))
-         vllm_loras_B .append((v_layer.mlp.gate_up_proj.lora_b_stacked[1], su,))
- 
-@@ -2843,6 +2843,18 @@
- 
+# load_lora_directly: `vllm_lora_B.copy_(model_lora_B); vllm_lora_B *= s`
+# corrupts the TRAINING weights when the vLLM slot aliases the training
+# tensor (zero-copy): copy_ is a self-copy no-op and the in-place scale
+# compounds (x s^8 per optimizer step observed on Phi-4-mini, 2026-07-24 —
+# "bug (c)": rollouts rot coherent -> gibberish -> token loops in ~5 steps).
+# No scaling scheme is correct on a shared buffer, so raise loudly and
+# require lora_alpha == lora_rank (s == 1) instead of corrupting silently.
+--- a/unsloth_zoo/vllm_utils.py
++++ b/unsloth_zoo/vllm_utils.py
+@@ -2870,5 +2870,17 @@
      # Must also scale B with scaling since vLLM does this
      for model_lora_B, (vllm_lora_B, s) in zip(model_loras_B, vllm_loras_B):
 +        if s is not None and vllm_lora_B.data_ptr() == model_lora_B.data_ptr():

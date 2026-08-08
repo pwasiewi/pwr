@@ -72,8 +72,15 @@ python_compile() {
 	# flag-o-matic filter-flags does not reliably strip these comma-glob
 	# tokens, so scrub every -Wl,* token per compile var explicitly.
 	# (cmake-based caffe2 is immune; this ninja/nvcc path is not.)
+	#
+	# LDFLAGS too (2026-08-08, hardened image): setuptools' customize_compiler
+	# folds env LDFLAGS into the compiler driver line, nvcc forwards it to the
+	# host gcc split on commas, and the .cu preprocess dies on a bare '-Wl'.
+	# cpp_extension never reads LDFLAGS itself, so the only cost is the python
+	# extension linking without -O1/--as-needed/pack-relative-relocs — cosmetic
+	# for a bundle that dlopens anyway.
 	local _fvar
-	for _fvar in CFLAGS CXXFLAGS CPPFLAGS; do
+	for _fvar in CFLAGS CXXFLAGS CPPFLAGS LDFLAGS; do
 		export ${_fvar}="$(sed 's/-Wl,[^ ]*//g' <<<"${!_fvar}")"
 	done
 
