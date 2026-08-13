@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Out-of-tree DDC/CI driver (ddcci + ddcci-backlight). Not in ::gentoo and
+    not in the mainline kernel; packaged here because the image profiles ship
+    a /etc/modules-load.d entry for it and the hardened images want external
+    monitor brightness under Plasma's own backlight control rather than
+    through a setuid-ish userspace path.
+
+    Pinned to a master commit rather than the v0.4.5 tag: upstream has cut no
+    release since 2024-07 and the tag does not build on kernels newer than
+    6.10.
+  </longdescription>
+  <upstream>
+    <remote-id type="gitlab">ddcci-driver-linux/ddcci-driver-linux</remote-id>
+  </upstream>
+</pkgmetadata>
