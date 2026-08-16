@@ -113,7 +113,7 @@ drop!); LIVE: only -9999 here. `inst` = installed version::repo.
 | dev-util/xrt | 2.23.0 +9999 |  | ONLY | 1 | 999999::pwr | github:Xilinx/XRT |
 | games-util/modrinth-app-bin | 0.17.10 |  | ONLY |  | 0.17.10::pwr | github:modrinth/code |
 | games-util/steam-launcher | 1.0.0.85-r3 |  | ONLY | 3 | 1.0.0.85-r3::pwr |  |
-| net-im/teams-for-linux | 2.13.0 |  | ONLY |  | 2.13.0::pwr | github:IsmaelMartinez/teams-for-linux |
+| net-im/teams-for-linux | 2.16.0 |  | ONLY |  | 2.16.0::pwr | github:IsmaelMartinez/teams-for-linux |
 | net-libs/webkit-gtk | 2.48.3-r1 | 2.52.5-r600 | OLDER | 1 | 2.52.5-r410::gentoo | github:WebKit/WebKit |
 | net-vpn/cisco-secure-client | 5.1.2.42 |  | ONLY |  |  |  |
 | net-vpn/protonvpn-cli | 2.2.12 |  | ONLY |  |  | github:ProtonVPN/protonvpn-cli-ng |
@@ -147,7 +147,7 @@ drop!); LIVE: only -9999 here. `inst` = installed version::repo.
 | sys-fs/squashfs-tools | +9999 | 4.7.5 | LIVE |  | 99999999::pwr |  |
 | sys-kernel/genkernel-next | 70-r1 |  | ONLY | 1 |  | github:Sabayon/genkernel-next |
 | sys-kernel/zen-sources | 7.1.3_p1 | 7.1.5 | OLDER |  | 7.1.5::gentoo | cpe:cpe:/o:linux:linux_kernel |
-| www-client/brave-bin | 1.93.129 |  | ONLY |  | 1.93.129::pwr | github:brave/brave-browser |
+| www-client/brave-bin | 1.93.136 |  | ONLY |  | 1.93.136::pwr | github:brave/brave-browser |
 | x11-misc/picom-jonaburg | +9999 |  | ONLY |  | 9999::pwr | github:jonaburg/picom |
 
 ## Quick update recipes
