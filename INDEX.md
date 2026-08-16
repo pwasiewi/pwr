@@ -203,9 +203,9 @@ resyncing with ::gentoo without reading the reason:
 amdkde/amdkdehard/intelhard/corehard configure only ::gentoo + ::pwr — a
 package an image installs from ::pwr must STAY here even when ::stuff has
 a newer copy. Removed as truly redundant (no pwr-only consumer, no local
-changes): sci-ml/transformers, dev-python/triton-bin — if the amdkde
-unsloth chain is ever completed, re-import them (commit cf263b2 was that
-import) or add ::stuff to the image. Kept and why:
+changes): sci-ml/transformers, dev-python/triton-bin — and amdkde now
+configures ::stuff itself (2026-08-16, same repo set as nvidiahard), so
+completing its unsloth chain needs no re-import. Kept and why:
 
 - **app-text/dvipsk, app-text/texlive-core, dev-libs/ptexenc** — installed
   from ::pwr in amdkdehard/intelhard/corehard (TeX stack); texlive-core's
