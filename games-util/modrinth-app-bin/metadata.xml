@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Modrinth App is the desktop mod manager and launcher for Minecraft from
+    the Modrinth platform: installs modpacks, mods, resource packs and
+    shaders, and manages per-instance Java runtimes on its own. This package
+    repacks the official prebuilt Tauri binary from the upstream .deb; it
+    renders through the system WebKitGTK (4.1 API).
+  </longdescription>
+  <upstream>
+    <remote-id type="github">modrinth/code</remote-id>
+  </upstream>
+</pkgmetadata>
