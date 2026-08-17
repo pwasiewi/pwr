@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		Official Trezor udev rules (bootloader 1209:53c0, firmware 1209:53c1,
+		legacy Trezor One 534c:0001), shared by dev-python/trezor and
+		app-crypt/trezor-suite-bin so the two never collide on the rules file.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">trezor/trezor-common</remote-id>
+	</upstream>
+</pkgmetadata>

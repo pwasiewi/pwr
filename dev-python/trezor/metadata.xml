@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		trezorlib + trezorctl. Talks to the device over hidapi (Trezor One)
+		or libusb1 (WebUSB models); net-misc/electrum detects it at runtime
+		for hardware-wallet support.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">trezor/trezor-firmware</remote-id>
+		<remote-id type="pypi">trezor</remote-id>
+	</upstream>
+</pkgmetadata>

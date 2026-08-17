@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+		Upstream AppImage extracted at build time and installed to
+		/opt/trezor-suite (Electron app with bundled trezord bridge).
+		Licensed under the Trezor Reference Source License — no
+		redistribution, hence RESTRICT="bindist mirror".
+	</longdescription>
+	<upstream>
+		<remote-id type="github">trezor/trezor-suite</remote-id>
+	</upstream>
+</pkgmetadata>
