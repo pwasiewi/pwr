@@ -1,0 +1,12 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=install postinst postrm
+DESCRIPTION=Udev rules granting seat users access to Trezor hardware wallets
+EAPI=8
+HOMEPAGE=https://trezor.io/learn/security-privacy/udev-rules
+INHERIT=udev
+KEYWORDS=~amd64 ~arm64
+LICENSE=CC0-1.0
+RDEPEND=acct-group/plugdev
+SLOT=0
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	udev	1a23882bb73bc31c64a6f00a5e515f34
+_md5_=7231b401c0c61c4ad6c4e2f4853360f1

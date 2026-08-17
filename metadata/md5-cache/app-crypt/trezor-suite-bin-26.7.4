@@ -1,0 +1,14 @@
+DEFINED_PHASES=install postinst postrm preinst unpack
+DESCRIPTION=Official desktop application for Trezor hardware wallets (prebuilt)
+EAPI=8
+HOMEPAGE=https://trezor.io/trezor-suite https://github.com/trezor/trezor-suite
+IDEPEND=dev-util/desktop-file-utils x11-misc/shared-mime-info
+INHERIT=desktop xdg
+KEYWORDS=-* ~amd64
+LICENSE=T-RSL
+RDEPEND=app-accessibility/at-spi2-core:2 app-crypt/trezor-udev-rules dev-libs/expat dev-libs/glib:2 dev-libs/nspr dev-libs/nss media-libs/alsa-lib media-libs/mesa net-print/cups sys-apps/dbus x11-libs/cairo x11-libs/gdk-pixbuf:2 x11-libs/gtk+:3 x11-libs/libdrm x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXdamage x11-libs/libXext x11-libs/libXfixes x11-libs/libXrandr x11-libs/libxcb x11-libs/libxkbcommon x11-libs/pango
+RESTRICT=bindist mirror strip test
+SLOT=0
+SRC_URI=https://github.com/trezor/trezor-suite/releases/download/v26.7.4/Trezor-Suite-26.7.4-linux-x86_64.AppImage
+_eclasses_=desktop	e447b5f77146d69797e9f03ff177f3f1	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	xdg	3ef49a87c52c8b77c476351195dfe575
+_md5_=c0c9424bc7efe9542125ae0120e01fa2
