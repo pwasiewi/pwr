@@ -7,10 +7,15 @@ inherit ecm git-r3
 
 DESCRIPTION="Shader Wallpaper for Plasma 6 - native engine with PipeWire audio capture"
 HOMEPAGE="https://github.com/y4my4my4m/kde-shader-wallpaper"
-# Own fork: upstream master + the raw-GL audio-texture fix and the Ysin
-# shader family (incl. the audio-reactive Ysin_Mist_Audio bufferA pair).
-EGIT_REPO_URI="https://github.com/pwasiewi/kde-shader-wallpaper.git"
-EGIT_BRANCH="audio-fork"
+# Tracks upstream master. This used to build from the pwasiewi fork because
+# upstream lacked the raw-GL audio texture and the buffer-FBO state reset;
+# both landed with the Ember/Ring_Spectrum/Hive_Spectrum shaders in PR #125
+# (released as v4.1.1), so the fork carries nothing extra any more.
+# To build a fork branch without editing this ebuild, git-r3 takes overrides
+# keyed on the repository name, not on ${PN}:
+#   EGIT_OVERRIDE_REPO_KDE_SHADER_WALLPAPER=https://github.com/pwasiewi/kde-shader-wallpaper.git
+#   EGIT_OVERRIDE_BRANCH_KDE_SHADER_WALLPAPER=<branch>
+EGIT_REPO_URI="https://github.com/y4my4my4m/kde-shader-wallpaper.git"
 
 LICENSE="GPL-3+"
 SLOT="0"
