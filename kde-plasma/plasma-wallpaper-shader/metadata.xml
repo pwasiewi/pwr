@@ -5,6 +5,10 @@
 		<email>pwasiewi@gmail.com</email>
 		<name>Piotr Wasiewicz</name>
 	</maintainer>
+	<use>
+		<flag name="pipewire">Capture desktop audio through <pkg>media-video/pipewire</pkg>
+			so shaders can react to what is playing</flag>
+	</use>
 	<upstream>
 		<remote-id type="github">y4my4my4m/kde-shader-wallpaper</remote-id>
 	</upstream>
