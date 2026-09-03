@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		Official prebuilt Bitcoin Cash Node (BCHN) release binaries:
+		bitcoind, bitcoin-cli, bitcoin-tx, bitcoin-wallet. Headless node
+		package — bitcoin-qt and bitcoin-seeder from the upstream tarball
+		are not installed.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">bitcoin-cash-node/bitcoin-cash-node</remote-id>
+	</upstream>
+</pkgmetadata>

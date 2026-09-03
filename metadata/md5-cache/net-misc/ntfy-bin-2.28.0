@@ -1,0 +1,14 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=install postinst
+DESCRIPTION=Simple HTTP-based pub-sub push notification service (server and client)
+EAPI=8
+HOMEPAGE=https://ntfy.sh https://github.com/binwiederhier/ntfy
+INHERIT=systemd
+KEYWORDS=-* ~amd64 ~arm64
+LICENSE=|| ( Apache-2.0 GPL-2 )
+RDEPEND=acct-group/ntfy acct-user/ntfy
+RESTRICT=mirror strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/binwiederhier/ntfy/releases/download/v2.28.0/ntfy_2.28.0_linux_amd64.tar.gz ) arm64? ( https://github.com/binwiederhier/ntfy/releases/download/v2.28.0/ntfy_2.28.0_linux_arm64.tar.gz )
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=4543ec9b57bd29f6402a0d8248ceb454

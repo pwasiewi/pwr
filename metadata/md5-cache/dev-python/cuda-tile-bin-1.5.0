@@ -1,0 +1,16 @@
+BDEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DEFINED_PHASES=compile configure install prepare test unpack
+DESCRIPTION=NVIDIA CUDA Tile Compiler (binary wheels)
+EAPI=8
+HOMEPAGE=https://pypi.org/project/cuda-tile/
+INHERIT=distutils-r1
+IUSE=python_targets_python3_12 python_targets_python3_13 python_targets_python3_14
+KEYWORDS=-* ~amd64
+LICENSE=all-rights-reserved
+RDEPEND=dev-python/typing-extensions[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+REQUIRED_USE=|| ( python_targets_python3_12 python_targets_python3_13 python_targets_python3_14 )
+RESTRICT=bindist mirror
+SLOT=0
+SRC_URI=python_targets_python3_12? ( https://files.pythonhosted.org/packages/1c/f5/b4ba9d0fc71198d939ebf9a090228179995d8411ee9def8f638a0e3ccdc5/cuda_tile-1.5.0-cp312-cp312-manylinux2014_x86_64.whl ) python_targets_python3_13? ( https://files.pythonhosted.org/packages/26/d5/ae03d2b70ed8d6c21ca809ddc98227ad07988e7fe67e7e41d888c0b13d32/cuda_tile-1.5.0-cp313-cp313-manylinux2014_x86_64.whl ) python_targets_python3_14? ( https://files.pythonhosted.org/packages/65/38/165499cbfb7c1ada110592fa9224e20851125b337bbe2e656b5d56c676f0/cuda_tile-1.5.0-cp314-cp314-manylinux2014_x86_64.whl )
+_eclasses_=distutils-r1	8b4cb6626db7331e3187d652f4bbf9d4	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	flag-o-matic	fd3558f73f6503093adee69adf41020d	multibuild	83db098a835f71feb71761f72a694aa2	multilib	fc812e8eb2170022c28272d80a1f9e77	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	out-of-source-utils	8e5093bd27b7f541a1913271f25d633a	python-r1	5fdca77e34fc9af7d6eb47689f33f6bf	python-utils-r1	5fd9a75ca55021d3276ce969f8e28391	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=db14408bb10c10d2e2635da311349a12

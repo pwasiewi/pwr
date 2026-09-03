@@ -1,0 +1,26 @@
+[Unit]
+Description=EloPool (ckpool fork) BCH solo stratum server
+Documentation=https://github.com/skaisser/ckpool
+After=network-online.target bitcoind.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=bitcoin
+Group=bitcoin
+WorkingDirectory=/var/lib/ckpool
+# -B: bitcoin solo mode, -k: kill any stale instance's sockets
+ExecStart=/usr/bin/ckpool -B -k -c /etc/ckpool/ckpool.conf
+Restart=on-failure
+RestartSec=15
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

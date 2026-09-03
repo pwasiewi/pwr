@@ -1,0 +1,25 @@
+[Unit]
+Description=ntfy push notification server
+After=network.target
+
+[Service]
+User=ntfy
+Group=ntfy
+ExecStart=/usr/bin/ntfy serve --no-log-dates
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+LimitNOFILE=10000
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+RestrictRealtime=true
+ProtectHostname=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

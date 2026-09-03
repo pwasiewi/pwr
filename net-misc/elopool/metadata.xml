@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription>
+		Production ckpool fork (BlockSniper.ai "EloPool"): native BCH
+		CashAddr, per-address on-chain solo payouts, configurable operator
+		fee, multi-node failover. Installs ckpool/ckproxy/ckpmsg/notifier
+		and a systemd unit for local solo mining against a BCHN node.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">skaisser/ckpool</remote-id>
+	</upstream>
+</pkgmetadata>

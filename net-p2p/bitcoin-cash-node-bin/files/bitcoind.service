@@ -1,0 +1,27 @@
+[Unit]
+Description=Bitcoin Cash Node daemon
+Documentation=https://docs.bitcoincashnode.org/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=bitcoin
+Group=bitcoin
+ExecStart=/usr/bin/bitcoind -conf=/etc/bitcoin/bitcoin.conf -datadir=/var/lib/bitcoind
+Restart=on-failure
+RestartSec=30
+# Flushing the UTXO cache on shutdown legitimately takes minutes.
+TimeoutStopSec=600
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

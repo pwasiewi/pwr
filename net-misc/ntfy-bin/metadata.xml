@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>pwasiewi@gmail.com</email>
+    <name>Piotr Wasiewicz</name>
+  </maintainer>
+  <longdescription>
+    ntfy (pronounced "notify") is a simple HTTP-based pub-sub notification
+    service: publish with a plain curl PUT/POST to a topic, subscribe from
+    the Android/iOS app, the web app or the CLI. This package installs the
+    upstream prebuilt static binary (server + client in one), example
+    configs and a hardened systemd unit.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">binwiederhier/ntfy</remote-id>
+  </upstream>
+</pkgmetadata>

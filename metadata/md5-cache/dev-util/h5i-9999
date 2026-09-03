@@ -1,0 +1,15 @@
+BDEPEND=|| ( >=dev-lang/rust-1.85 >=dev-lang/rust-bin-1.85 ) virtual/pkgconfig web? ( net-libs/nodejs[npm] ) >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile configure install postinst setup unpack
+DEPEND=dev-libs/openssl:= containers? ( app-containers/podman )
+DESCRIPTION=Disposable, confined development environments for AI coding agents
+EAPI=8
+HOMEPAGE=https://github.com/h5i-dev/h5i
+INHERIT=flag-o-matic git-r3 linux-info shell-completion
+IUSE=+web containers
+LICENSE=Apache-2.0
+PROPERTIES=live live
+RDEPEND=dev-libs/openssl:= containers? ( app-containers/podman )
+RESTRICT=network-sandbox test
+SLOT=0
+_eclasses_=flag-o-matic	fd3558f73f6503093adee69adf41020d	git-r3	2f8cdb10b033f92c3136aa6488a31c98	linux-info	efd923656513c879204fec6638eadee5	shell-completion	63a62de3ca49c798ee6e89f190e45d0e	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=2829f42e47822b637af960bd661b5b53

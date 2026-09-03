@@ -9,10 +9,15 @@
 #    where udev_dorules lands via the /lib -> usr/lib merge.
 #  - Adds the Gainward RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323),
 #    not yet upstream — this host's GPU.
+# 2026-09-03: dropped OpenRGB-0.7-r1-udev.patch — upstream 7854c491
+# (2026-08-24) removed udev rules from the repo AND the build entirely; the
+# executable generates them now (--print-udev-rules), and the .pro installs a
+# systemd unit + tmpfiles instead. src_install runs the freshly built binary
+# to generate the rules and lands them via udev_dorules as before.
 
 EAPI=8
 
-inherit check-reqs flag-o-matic qmake-utils udev xdg-utils
+inherit check-reqs flag-o-matic qmake-utils tmpfiles udev xdg-utils
 
 inherit git-r3
 EGIT_REPO_URI=${EGIT_REPO_URI:-"https://gitlab.com/CalcProgrammer1/OpenRGB"}
@@ -43,7 +48,6 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}"/OpenRGB-0.7-r1-udev.patch
 	"${FILESDIR}"/openrgb-9999-gainward-rtx5070ti-phoenix.patch
 )
 
@@ -87,8 +91,14 @@ src_install() {
 
 	dodoc README.md
 
-	rm -r "${ED}"/usr/lib/udev/ || die
-	udev_dorules 60-openrgb.rules
+	# Upstream neither ships nor installs udev rules since 7854c491 — the
+	# executable generates them from its own device table and exits
+	# immediately (no hardware access, no GUI: offscreen platform just in
+	# case Qt initializes before the option is parsed).
+	QT_QPA_PLATFORM=offscreen "${S}"/openrgb --print-udev-rules \
+		> "${T}"/60-openrgb.rules || die "udev rules generation failed"
+	[[ -s ${T}/60-openrgb.rules ]] || die "generated udev rules are empty"
+	udev_dorules "${T}"/60-openrgb.rules
 
 	# This is for plugins. Upstream doesn't install any headers at all.
 	insinto /usr/include/OpenRGB
@@ -98,6 +108,9 @@ src_install() {
 pkg_postinst() {
 	xdg_icon_cache_update
 	udev_reload
+	# upstream's .pro installs /usr/lib/tmpfiles.d/openrgb.conf (state dir
+	# for the new openrgb.service SDK server) since 7854c491
+	tmpfiles_process openrgb.conf
 }
 
 pkg_postrm() {

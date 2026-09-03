@@ -1,0 +1,9 @@
+DEFINED_PHASES=install postinst preinst prerm pretend
+DESCRIPTION=User for the ntfy notification server
+EAPI=8
+INHERIT=acct-user
+KEYWORDS=~amd64 ~arm64
+RDEPEND=acct-group/ntfy
+SLOT=0
+_eclasses_=user-info	9bc91a5977c2453c0a861b26f65057ea	edo	a5e294016aa84979fcb2459749eb80b2	acct-user	b9c88d767674bff385e6af737802d263
+_md5_=ac62a488b9c8980c20fbf4bab050327c
