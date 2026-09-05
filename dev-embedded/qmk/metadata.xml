@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">qmk/qmk_cli</remote-id>
+		<remote-id type="pypi">qmk</remote-id>
+	</upstream>
+	<use>
+		<flag name="hid">Enable the USB HID debug console (qmk console) via dev-python/hid; blocks dev-python/hidapi (trezor)</flag>
+	</use>
+</pkgmetadata>
