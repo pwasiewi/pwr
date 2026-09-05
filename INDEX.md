@@ -156,7 +156,7 @@ drop!); LIVE: only -9999 here. `inst` = installed version::repo.
 | sci-ml/fastflowlm | 0.9.45 +9999 |  | ONLY | 4 | 1.0.4::stuff | github:FastFlowLM/FastFlowLM |
 | sci-ml/kokoros | +9999 |  | ONLY |  |  | github:lucasjinreal/Kokoros |
 | sci-ml/lemonade | 11.5.0 +9999 |  | ONLY | 2 | 11.8.1::stuff | github:lemonade-sdk/lemonade |
-| sci-ml/ollama | 0.23.2 +9999 | 0.33.2 | OLDER | 6 |  | github:ollama/ollama |
+| sci-ml/ollama | 0.23.2 +9999 | 0.33.3 | OLDER | 6 |  | github:ollama/ollama |
 | sci-ml/peft | 0.19.1 +9999 |  | ONLY |  | 9999::pwr | github:huggingface/peft |
 | sci-ml/pytorch | 2.12.1 +9999 | 2.14.0 | OLDER | 1 | 9999::pwr | github:pytorch/pytorch |
 | sci-ml/safetensors | 0.8.0 | 0.8.0 | FORK |  | 0.8.0::pwr | pypi:safetensors |
@@ -169,7 +169,7 @@ drop!); LIVE: only -9999 here. `inst` = installed version::repo.
 | sys-fs/encfs | 1.9.6_alpha0 |  | ONLY |  | 1.9.6_alpha0::pwr | google-code:encfs |
 | sys-fs/squashfs-tools | +9999 | 4.7.5 | LIVE |  | 99999999::pwr |  |
 | sys-kernel/genkernel-next | 70-r1 |  | ONLY | 1 |  | github:Sabayon/genkernel-next |
-| sys-kernel/zen-sources | 7.1.10 | 7.1.5 | BUMP |  | 7.1.5::gentoo | cpe:cpe:/o:linux:linux_kernel |
+| sys-kernel/zen-sources | 7.2.3 | 7.1.5 | BUMP |  | 7.1.5::gentoo | cpe:cpe:/o:linux:linux_kernel |
 | www-client/brave-bin | 1.94.119 |  | ONLY |  | 1.94.119::pwr | github:brave/brave-browser |
 | x11-misc/picom-jonaburg | +9999 |  | ONLY |  | 9999::pwr | github:jonaburg/picom |
 
