@@ -27,6 +27,12 @@ KEYWORDS="~amd64 ~x86"
 # reason to install this at all — ddcutil already talks to monitors through
 # /dev/i2c-*; only the kernel driver gives Plasma's brightness slider an
 # external monitor to move.
+
+# Linux 7.2 dropped the strncpy() declaration modules could use; the sysfs
+# show handlers here still called it. strscpy() is equivalent for their use
+# and old enough for every kernel this overlay builds.
+PATCHES=( "${FILESDIR}"/${P}-strscpy.patch )
+
 CONFIG_CHECK="I2C BACKLIGHT_CLASS_DEVICE"
 ERROR_I2C="ddcci binds to i2c adapters and needs CONFIG_I2C"
 ERROR_BACKLIGHT_CLASS_DEVICE="ddcci-backlight needs CONFIG_BACKLIGHT_CLASS_DEVICE"

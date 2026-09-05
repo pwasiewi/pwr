@@ -1,0 +1,59 @@
+Use strscpy() instead of strncpy() in the sysfs show handlers.
+
+Linux 7.2 no longer declares strncpy() for modules, so every one of these
+five calls is a hard "call to undeclared library function 'strncpy'" error.
+strscpy() is the drop-in here: the destination is a PAGE_SIZE sysfs buffer,
+the source is a small fixed array, and each caller already computes its own
+length with strnlen() and appends the newline itself - the NUL padding
+strncpy() did was never read. strscpy() has been available since 4.3, so
+the patched source still builds against the older kernels in this overlay.
+
+Not sent upstream: gitlab.com/ddcci-driver-linux has had no commit since
+2025-09-27.
+--- a/ddcci/ddcci.c
++++ b/ddcci/ddcci.c
+@@ -765,7 +765,7 @@
+ 
+ 	if (likely(device != NULL)) {
+ 		len = strnlen(device->prot, sizeof(device->prot));
+-		strncpy(buf, device->prot, PAGE_SIZE);
++		strscpy(buf, device->prot, PAGE_SIZE);
+ 		if (len == 0) {
+ 			ret = len;
+ 		} else if (likely(len < PAGE_SIZE)) {
+@@ -787,7 +787,7 @@
+ 
+ 	if (likely(device != NULL)) {
+ 		len = strnlen(device->type, sizeof(device->type));
+-		strncpy(buf, device->type, PAGE_SIZE);
++		strscpy(buf, device->type, PAGE_SIZE);
+ 		if (len == 0) {
+ 			ret = len;
+ 		} else if (likely(len < PAGE_SIZE)) {
+@@ -809,7 +809,7 @@
+ 
+ 	if (likely(device != NULL)) {
+ 		len = strnlen(device->model, sizeof(device->model));
+-		strncpy(buf, device->model, PAGE_SIZE);
++		strscpy(buf, device->model, PAGE_SIZE);
+ 		if (len == 0) {
+ 			ret = len;
+ 		} else if (likely(len < PAGE_SIZE)) {
+@@ -831,7 +831,7 @@
+ 
+ 	if (likely(device != NULL)) {
+ 		len = strnlen(device->vendor, sizeof(device->vendor));
+-		strncpy(buf, device->vendor, PAGE_SIZE);
++		strscpy(buf, device->vendor, PAGE_SIZE);
+ 		if (len == 0) {
+ 			ret = len;
+ 		} else if (likely(len < PAGE_SIZE)) {
+@@ -853,7 +853,7 @@
+ 
+ 	if (likely(device != NULL)) {
+ 		len = strnlen(device->module, sizeof(device->module));
+-		strncpy(buf, device->module, PAGE_SIZE);
++		strscpy(buf, device->module, PAGE_SIZE);
+ 		if (len == 0) {
+ 			ret = len;
+ 		} else if (likely(len < PAGE_SIZE)) {
