@@ -1,0 +1,92 @@
+--- a/unsloth_zoo/vllm_utils.py
++++ b/unsloth_zoo/vllm_utils.py
+@@ -14,6 +14,89 @@
+ # You should have received a copy of the GNU Lesser General Public License
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ 
++# --- ::pwr shim -------------------------------------------------------------
++# vLLM 073c510c9 (2026-08-09, vllm-project/vllm#43529) moved bitsandbytes
++# support out of tree into vllm-bnb-plugin. The code below still imports and
++# monkeypatches the old in-tree modules
++#   vllm.model_executor.layers.quantization.bitsandbytes
++#   vllm.model_executor.model_loader.bitsandbytes_loader
++# so with a post-migration vLLM 'import unsloth_zoo.vllm_utils' died with
++# ModuleNotFoundError. When the in-tree modules are gone and the plugin is
++# installed: register the plugin eagerly (idempotent), alias the loader module
++# 1:1, and alias the quantization module to a write-through proxy over every
++# plugin module that bound the names at import time (config/linear/utils/...),
++# so the monkeypatches (is_layer_skipped_bnb, BitsAndBytesConfig compute
++# dtype) reach the call sites; a BitsAndBytesConfig replacement is also pushed
++# into vLLM's customized-quantization registry, which the plugin populated
++# with the original class. A pre-migration vLLM is left untouched.
++def _pwr_alias_vllm_bnb_modules():
++    import importlib
++    import sys
++    import types
++
++    quant_name = "vllm.model_executor.layers.quantization.bitsandbytes"
++    loader_name = "vllm.model_executor.model_loader.bitsandbytes_loader"
++    try:
++        importlib.import_module(quant_name)
++        importlib.import_module(loader_name)
++        return  # in-tree bitsandbytes support still present
++    except ImportError:
++        pass
++    try:
++        plugin = importlib.import_module("vllm_bnb_plugin")
++        loader_mod = importlib.import_module("vllm_bnb_plugin.bitsandbytes_loader")
++    except ImportError:
++        return  # no plugin either: the original ImportError surfaces below
++    plugin.register()
++
++    targets = []
++    for name in (
++        "vllm_bnb_plugin.bitsandbytes",
++        "vllm_bnb_plugin",
++        "vllm_bnb_plugin.quantization",
++        "vllm_bnb_plugin.quantization.config",
++        "vllm_bnb_plugin.quantization.linear",
++        "vllm_bnb_plugin.quantization.params",
++        "vllm_bnb_plugin.quantization.utils",
++        "vllm_bnb_plugin.quantization.fused_moe",
++    ):
++        try:
++            targets.append(importlib.import_module(name))
++        except ImportError:
++            pass
++
++    class _WriteThroughModule(types.ModuleType):
++        def __getattr__(self, name):
++            for target in self.__dict__["_targets"]:
++                try:
++                    return getattr(target, name)
++                except AttributeError:
++                    pass
++            raise AttributeError(f"{self.__name__} has no attribute {name!r}")
++
++        def __setattr__(self, name, value):
++            hit = False
++            for target in self.__dict__["_targets"]:
++                if hasattr(target, name):
++                    setattr(target, name, value)
++                    hit = True
++            if not hit:
++                setattr(self.__dict__["_targets"][0], name, value)
++            if name == "BitsAndBytesConfig":
++                from vllm.model_executor.layers import quantization as _q
++                _q._CUSTOMIZED_METHOD_TO_QUANT_CONFIG["bitsandbytes"] = value
++
++    proxy = _WriteThroughModule(quant_name)
++    proxy.__dict__["_targets"] = targets
++    for old, mod in ((quant_name, proxy), (loader_name, loader_mod)):
++        sys.modules[old] = mod
++        parent, _, attr = old.rpartition(".")
++        setattr(importlib.import_module(parent), attr, mod)
++
++
++_pwr_alias_vllm_bnb_modules()
++# --- end ::pwr shim ---------------------------------------------------------
++
+ __all__ = [
+     "patch_vllm",
+     "vllm_dynamic_quant_supported",

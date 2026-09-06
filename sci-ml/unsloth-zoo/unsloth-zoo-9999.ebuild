@@ -16,6 +16,8 @@ EGIT_BRANCH="main"
 LICENSE="LGPL-3"
 SLOT="0"
 
+# vllm-bnb-plugin: vLLM >= 073c510c9 keeps bitsandbytes out of tree; vllm_utils.py
+# carries a shim (files/*-vllm-bnb-plugin-shim.patch) that needs the plugin.
 RDEPEND="
 	~sci-ml/pytorch-9999[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/accelerate[${PYTHON_SINGLE_USEDEP}]
@@ -26,6 +28,7 @@ RDEPEND="
 	sci-ml/transformers[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/torchao[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/trl[${PYTHON_SINGLE_USEDEP}]
+	dev-python/vllm-bnb-plugin[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		dev-python/hf-transfer[${PYTHON_USEDEP}]
 		dev-python/filelock[${PYTHON_USEDEP}]
@@ -66,6 +69,8 @@ src_prepare() {
 	# de-alias vLLM hot-load LoRA tensors (bug (c) root) + merge-path
 	# CPU snapshot and magnitude tripwire (bug (d)); after skip-ref-adapter
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-dealias-merge-guard.patch"
+	# alias the removed in-tree vLLM bitsandbytes modules to vllm-bnb-plugin
+	eapply "${FILESDIR}/${PN}-9999-vllm-bnb-plugin-shim.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die
