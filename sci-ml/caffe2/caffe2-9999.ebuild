@@ -504,9 +504,31 @@ src_install() {
 	# so the [[ -e ]] test would silently fail and the file would NOT move.
 	local sitedir f
 	sitedir=$(python_get_sitedir)
-	for f in "${D}/usr/"_C.cpython-*.so "${D}/usr/"_VF.pyi "${D}/usr/"return_types.pyi; do
-		[[ -e ${f} ]] && { mv "${f}" "${D}${sitedir}/torch/" || die; }
+	# Upstream #191494 (2026-08) guards every Python-side install rule with
+	# if(SKBUILD) and addresses ${SKBUILD_PLATLIB_DIR}/torch directly, so a
+	# plain cmake install ships libtorch only: the torch._C extension module is
+	# BUILT (LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/torch) but never
+	# installed, and 'import torch' fails at runtime with the "loaded the
+	# torch/_C folder" ImportError. Take it from the build tree ourselves; the
+	# build-tree RUNPATH is dropped by portage's install-time QA fix and
+	# libtorch_python.so resolves through ld.so.conf. Fail loudly — the old
+	# '[[ -e ]] &&' loop is exactly how the miss went unnoticed.
+	local cmod=( "${BUILD_DIR}"/torch/_C.cpython-*.so )
+	[[ -e ${cmod[0]} ]] || die "torch._C extension not found in ${BUILD_DIR}/torch"
+	exeinto "${sitedir}/torch"
+	doexe "${cmod[@]}"
+	# Generated stubs (gen_pyi writes them into the source tree); pre-#191494
+	# trees installed them at the prefix root instead.
+	for f in "${S}"/torch/_VF.pyi "${S}"/torch/return_types.pyi \
+		"${D}/usr/"_C.cpython-*.so "${D}/usr/"_VF.pyi "${D}/usr/"return_types.pyi; do
+		[[ -e ${f} ]] || continue
+		if [[ ${f} == "${D}"/* ]]; then
+			mv "${f}" "${D}${sitedir}/torch/" || die
+		else
+			insinto "${sitedir}/torch"
+			doins "${f}"
+		fi
 	done
 	rm -f "${D}/usr/version.py" || die
-	rm -rf "${D}/usr/_C_flatbuffer" || die
+	rm -rf "${D}/usr/_C_flatbuffer" "${D}/usr/_C" || die
 }
