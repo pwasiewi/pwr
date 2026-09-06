@@ -61,7 +61,7 @@ REQUIRED_USE="
 RDEPEND="
 	>=sci-ml/pytorch-2.11.0[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/caffe2[distributed,gloo]
-	>=sci-ml/transformers-5.5.3[${PYTHON_SINGLE_USEDEP}]
+	>=sci-ml/transformers-5.10.4[${PYTHON_SINGLE_USEDEP}]
 	>=sci-ml/tokenizers-0.21.1[${PYTHON_SINGLE_USEDEP}]
 	>=dev-python/xgrammar-0.2.0[${PYTHON_SINGLE_USEDEP}]
 	<dev-python/xgrammar-1.0.0[${PYTHON_SINGLE_USEDEP}]
@@ -133,7 +133,7 @@ RDEPEND="
 		|| ( >=sci-ml/caffe2-2.11.0-r90 ~sci-ml/caffe2-9999 )
 		>=sci-ml/torchaudio-2.11.0
 		>=sci-ml/torchvision-0.26.0[${PYTHON_SINGLE_USEDEP}]
-		~dev-python/flashinfer-python-0.6.12[${PYTHON_SINGLE_USEDEP}]
+		~dev-python/flashinfer-python-0.6.17[${PYTHON_SINGLE_USEDEP}]
 		~dev-python/tilelang-0.1.9[${PYTHON_SINGLE_USEDEP}]
 		>=dev-python/quack-kernels-0.3.3[${PYTHON_SINGLE_USEDEP}]
 		humming? ( ~dev-python/humming-kernels-0.1.4[${PYTHON_SINGLE_USEDEP}] )
