@@ -20,7 +20,10 @@ SRC_URI="https://github.com/rvaiya/keyd/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64 ~x86"
-IUSE="+systemd"
+# Deliberately NOT '+systemd': targets/systemd sets USE="systemd udev", so the
+# flag follows the image's profile on its own — on for the hardened amd64
+# images, off for the OpenRC Pi ones — and neither has to override it.
+IUSE="systemd"
 
 RDEPEND="acct-group/keyd"
 DEPEND="${RDEPEND}"
