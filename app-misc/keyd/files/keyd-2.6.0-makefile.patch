@@ -1,0 +1,33 @@
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ VERSION=2.6.0
+ COMMIT=$(shell git describe --no-match --always --abbrev=7 --dirty)
+ VKBD=uinput
+-PREFIX?=/usr/local
++PREFIX=$(EPREFIX)/usr
+ 
+ CONFIG_DIR?=/etc/keyd
+ SOCKET_PATH=/var/run/keyd.socket
+@@ -49,12 +49,10 @@
+ 	done
+ install:
+ 
+-	@if [ -e /run/systemd/system -o "$(FORCE_SYSTEMD)" ]; then \
++	@if [ -n "$(FORCE_SYSTEMD)" ]; then \
+ 		sed -e 's#@PREFIX@#$(PREFIX)#' keyd.service.in > keyd.service; \
+ 		mkdir -p $(DESTDIR)$(PREFIX)/lib/systemd/system/; \
+ 		install -Dm644 keyd.service $(DESTDIR)$(PREFIX)/lib/systemd/system/keyd.service; \
+-		mkdir -p $(DESTDIR)$(PREFIX)/lib/sysusers.d/; \
+-		install -m644 data/sysusers.d $(DESTDIR)$(PREFIX)/lib/sysusers.d/keyd.conf; \
+ 	else \
+ 		echo "NOTE: systemd not found, you will need to manually add keyd to your system's init process."; \
+ 	fi
+@@ -73,7 +71,6 @@
+ 	mkdir -p $(DESTDIR)$(PREFIX)/share/doc/keyd/
+ 	mkdir -p $(DESTDIR)$(PREFIX)/share/doc/keyd/examples/
+ 
+-	-groupadd keyd
+ 	install -m755 bin/* $(DESTDIR)$(PREFIX)/bin/
+ 	install -m644 docs/*.md $(DESTDIR)$(PREFIX)/share/doc/keyd/
+ 	install -m644 examples/* $(DESTDIR)$(PREFIX)/share/doc/keyd/examples/
