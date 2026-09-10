@@ -16,11 +16,13 @@ inherit distutils-r1 pypi
 # without this package (its flash_attn import IS guarded and falls back to
 # SDPA, but the SwiGLU one is not). Used by llm/lc_11_neobert_imdb.py.
 #
-# The FILESDIR patch keeps this a CPU-only build - no CUDA kernels are
-# compiled. That is deliberate and sufficient: xformers.ops.SwiGLU dispatches
-# to its eager PyTorch implementation when no fused kernel is present, which
-# still runs on CUDA tensors, just unfused. Building the CUDA kernels against
-# the live sci-ml/pytorch-9999 would be a long compile for no benefit here.
+# No CUDA kernels are compiled here (the FILESDIR patch plus the phase
+# overrides below - see the long note further down, the patch alone does NOT
+# achieve this). That is deliberate and sufficient: xformers.ops.SwiGLU
+# dispatches to its eager PyTorch implementation when no fused kernel is
+# present, which still runs on CUDA tensors, just unfused. Building the CUDA
+# kernels against the live sci-ml/pytorch-9999 would be a long compile for no
+# benefit here.
 
 DESCRIPTION="Composable building blocks for transformer models"
 HOMEPAGE="
@@ -72,12 +74,10 @@ export XFORMERS_DISABLE_ACCELERATOR=1
 # Neutralise both bypasses so the disable flag means what it says. Empty (not
 # unset) is what setup.py tests for.
 #
-# This MUST happen inside the phase function, not at global scope. A global
-# `export TORCH_CUDA_ARCH_LIST=""` here is silently overridden: portage applies
-# the make.conf variables to the phase environment after sourcing the ebuild,
-# so make.conf wins and the phase still sees "12.0". Verified by grepping
-# ${T}/environment after a failed build - the global export left no trace.
-# `local -x` scopes the override to the build itself, which is where it counts.
+# Scoped to the phase with `local -x` rather than exported at global scope:
+# TORCH_CUDA_ARCH_LIST is a make.conf variable that other packages in this tree
+# (sci-ml/pytorch, sci-ml/caffe2) legitimately need, so the override is kept as
+# narrow as the problem - this one build, this one phase.
 
 python_compile() {
 	local -x TORCH_CUDA_ARCH_LIST=""
