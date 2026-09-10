@@ -51,3 +51,36 @@ export CUDA_VISIBLE_DEVICES=""
 export HIP_VISIBLE_DEVICES=""
 export ROCR_VISIBLE_DEVICES=""
 export XFORMERS_DISABLE_ACCELERATOR=1
+
+# XFORMERS_DISABLE_ACCELERATOR ALONE IS NOT ENOUGH, and this is the ::stuff
+# ebuild's bug. The FILESDIR patch only guards the first disjunct of setup.py's
+# accelerator test; the condition is a three-way or:
+#
+#   if ( <patched: DISABLE!=1 and torch.cuda.is_available() and ...>
+#        or os.getenv("FORCE_CUDA", "0") == "1"
+#        or os.getenv("TORCH_CUDA_ARCH_LIST", "") != "" ):
+#
+# so anything that exports TORCH_CUDA_ARCH_LIST re-enables the CUDA extension
+# behind the flag's back. That is not hypothetical here: this host sets
+# TORCH_CUDA_ARCH_LIST="12.0" globally in make.conf for the sci-ml/pytorch and
+# sci-ml/caffe2 builds, and it leaks into every other package. The result was a
+# full nvcc build of the sparse24/gemm kernels that then died on
+#   host_config.h:137: #error -- unsupported GNU version! gcc versions later
+#   than 15 are not supported!
+# because this host is gcc 16.2.0 against CUDA 13.3.
+#
+# Neutralise both bypasses so the disable flag means what it says. Empty (not
+# unset) is what setup.py tests for.
+#
+# This MUST happen inside the phase function, not at global scope. A global
+# `export TORCH_CUDA_ARCH_LIST=""` here is silently overridden: portage applies
+# the make.conf variables to the phase environment after sourcing the ebuild,
+# so make.conf wins and the phase still sees "12.0". Verified by grepping
+# ${T}/environment after a failed build - the global export left no trace.
+# `local -x` scopes the override to the build itself, which is where it counts.
+
+python_compile() {
+	local -x TORCH_CUDA_ARCH_LIST=""
+	local -x FORCE_CUDA=0
+	distutils-r1_python_compile
+}
