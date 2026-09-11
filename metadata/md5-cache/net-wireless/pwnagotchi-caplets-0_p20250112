@@ -1,4 +1,4 @@
-DEFINED_PHASES=install
+DEFINED_PHASES=compile install
 DESCRIPTION=Caplets (bettercap scripts) fork carrying the pwnagotchi caplets
 EAPI=8
 HOMEPAGE=https://github.com/jayofelony/caplets
@@ -7,4 +7,4 @@ LICENSE=GPL-3
 RDEPEND=net-wireless/pwnagotchi-bettercap
 SLOT=0
 SRC_URI=https://github.com/jayofelony/caplets/archive/3c90f7871f2c60585ff7c76fb68701ace395285a.tar.gz -> pwnagotchi-caplets-0_p20250112.gh.tar.gz
-_md5_=9bdb8ba92ea796eb949433bd914096fc
+_md5_=dbf432ae949e4c21dac698fd277c99d7
