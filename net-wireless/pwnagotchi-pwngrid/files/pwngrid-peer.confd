@@ -1,0 +1,7 @@
+# /etc/conf.d/pwngrid-peer
+#
+# -keys is the directory holding the peer identity keypair; pwnagotchi reads the
+# same pair out of /etc/pwnagotchi, so keep both pointed at one place.
+# -iface must be the monitor interface bettercap is already using -- match
+# main.iface in /etc/pwnagotchi/config.toml.
+PWNGRID_OPTS="-keys /etc/pwnagotchi -peers /var/lib/pwngrid/peers -address 127.0.0.1:8666 -client-token /var/lib/pwngrid/api-enrollment.json -wait -log /var/log/pwngrid/pwngrid-peer.log -iface wlan0mon"

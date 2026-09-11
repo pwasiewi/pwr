@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    jayofelony's fork of pwngrid, which implements the peer-to-peer protocol pwnagotchi units use to advertise themselves and exchange handshake metadata over a shared grid. Upstream evilsocket/pwngrid stopped at v1.10.3 in 2019; this fork is the one pwnagotchi actually talks to. Installs /usr/bin/pwngrid.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">jayofelony/pwngrid</remote-id>
+  </upstream>
+</pkgmetadata>

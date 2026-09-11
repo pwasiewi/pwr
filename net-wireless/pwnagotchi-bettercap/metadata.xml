@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    jayofelony's fork of bettercap, tracked on its pcapng branch: the extra commits keep a handshake pcapng file's section open across bettercap restarts, which is what pwnagotchi's handshake accounting expects. Packaged under a fork-specific name because upstream bettercap has moved on to 2.41.7 and net-analyzer/bettercap should stay available for it. Installs /usr/bin/bettercap.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">jayofelony/bettercap</remote-id>
+  </upstream>
+</pkgmetadata>

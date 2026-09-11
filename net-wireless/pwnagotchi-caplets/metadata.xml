@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    jayofelony's fork of bettercap's caplet collection. Caplets are bettercap's own scripting format; this fork adds pwnagotchi-auto.cap and pwnagotchi-manual.cap, the two bettercap is started with depending on whether pwnagotchi runs in AUTO or manual mode.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">jayofelony/caplets</remote-id>
+  </upstream>
+</pkgmetadata>

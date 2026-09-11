@@ -54,6 +54,9 @@ RDEPEND="
 	')
 	net-wireless/iw
 	sys-apps/iproute2
+	net-wireless/pwnagotchi-bettercap
+	net-wireless/pwnagotchi-caplets
+	net-wireless/pwnagotchi-pwngrid
 "
 
 # Upstream ships no test suite -- only the pi-gen image scaffolding under
@@ -127,11 +130,10 @@ python_install_all() {
 
 pkg_postinst() {
 	if [[ -z ${REPLACING_VERSIONS} ]]; then
-		elog "pwnagotchi drives bettercap over its REST/websocket API and does"
-		elog "nothing without it. Neither daemon is packaged for Gentoo yet:"
-		elog "  bettercap  https://github.com/bettercap/bettercap   (Go)"
-		elog "  pwngrid    https://github.com/evilsocket/pwngrid    (Go, opt-in grid)"
-		elog "Install both before enabling the service."
+		elog "bettercap and pwngrid come in as net-wireless/pwnagotchi-bettercap"
+		elog "and -pwngrid: jayofelony's forks, not upstream, because that is what"
+		elog "this talks to. pwnagotchi drives bettercap over its REST/websocket"
+		elog "API and does nothing without it."
 		elog
 		elog "Copy /etc/${PN}/config.toml.example to /etc/${PN}/config.toml and set"
 		elog "at least main.iface to your monitor interface. On non-Broadcom"

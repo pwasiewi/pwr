@@ -1,0 +1,19 @@
+#!/sbin/openrc-run
+# Copyright 1999-2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="pwngrid peer service"
+
+command="/usr/bin/pwngrid"
+command_args="${PWNGRID_OPTS}"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need net
+    after bettercap
+}
+
+start_pre() {
+    checkpath -d -m 0750 -o root:root /var/log/pwngrid /var/lib/pwngrid
+}
