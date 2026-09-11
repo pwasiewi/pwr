@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    pwnagotchi drives bettercap over its REST and websocket API to collect WPA
+    handshake material from the air, showing status on a small e-paper or LCD
+    panel. This is the jayofelony fork, whose default branch (noai) drops the
+    deep reinforcement learning agent of the original; the remaining auto-tune
+    plugin still adapts the personality parameters from per-session channel and
+    AP histograms, so the device does still adjust to its environment.
+
+    Upstream ships this as a whole Raspberry Pi OS image rather than a package.
+    Only the Python application is packaged here: bettercap and pwngrid are
+    separate Go daemons and are not in Portage, and the image-only shell
+    scaffolding (pwnlib, pwnagotchi-launcher, bettercap-launcher) is replaced
+    by a service file and driver-agnostic monitor-mode helpers.
+
+    Capturing handshakes from networks you do not own or have written
+    permission to test is illegal in most jurisdictions. The default
+    personality performs deauthentication and association attacks.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">jayofelony/pwnagotchi</remote-id>
+  </upstream>
+</pkgmetadata>

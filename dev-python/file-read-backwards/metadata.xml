@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    file_read_backwards reads a file line by line starting at the end, without
+    loading it into memory: it seeks backwards in fixed-size chunks and yields
+    complete lines as it finds them. Handles utf-8, latin-1 and ascii, and both
+    LF and CRLF line endings.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">RobinNil/file_read_backwards</remote-id>
+    <remote-id type="pypi">file-read-backwards</remote-id>
+  </upstream>
+</pkgmetadata>

@@ -1,0 +1,15 @@
+# /etc/conf.d/pwnagotchi
+
+# Radio pwnagotchi captures on. Must match main.iface in config.toml (minus the
+# "mon" suffix) -- the monstart/monstop helpers build the monitor vif name from
+# it. On a Pi Zero 2 W the onboard Broadcom radio is wlan0 and is 2.4 GHz only;
+# a dual-band USB adapter shows up under whatever name udev gives it.
+PWNAGOTCHI_IFACE="wlan0"
+
+# Monitor interface to create. Defaults to "${PWNAGOTCHI_IFACE}mon".
+#PWNAGOTCHI_MON_IFACE="wlan0mon"
+
+# Extra arguments. --manual skips AUTO mode (no deauth/assoc, just the UI and
+# whatever bettercap already sees) and is the right way to try it out first.
+#PWNAGOTCHI_OPTS="--manual --debug"
+PWNAGOTCHI_OPTS=""

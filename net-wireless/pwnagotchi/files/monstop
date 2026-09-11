@@ -1,0 +1,16 @@
+#!/bin/sh
+# Tear down the monitor interface created by monstart and hand the radio back.
+set -eu
+
+[ -r /etc/conf.d/pwnagotchi ] && . /etc/conf.d/pwnagotchi
+
+IFACE="${PWNAGOTCHI_IFACE:-wlan0}"
+MON="${PWNAGOTCHI_MON_IFACE:-${IFACE}mon}"
+
+if [ -e "/sys/class/net/${MON}" ]; then
+    ip link set "${MON}" down || true
+    iw dev "${MON}" del || true
+fi
+
+[ -e "/sys/class/net/${IFACE}" ] && ip link set "${IFACE}" up || true
+exit 0

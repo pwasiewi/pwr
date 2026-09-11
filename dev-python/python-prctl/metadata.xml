@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    python-prctl wraps the Linux prctl(2) syscall, which manipulates various
+    per-process and per-thread settings: the process name as seen by ps and
+    top, the parent-death signal, dumpability, no-new-privs, securebits, and
+    the capability bounding set via libcap.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">seveas/python-prctl</remote-id>
+    <remote-id type="pypi">python-prctl</remote-id>
+  </upstream>
+</pkgmetadata>

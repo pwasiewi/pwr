@@ -1,0 +1,41 @@
+#!/bin/sh
+# Bring up a monitor-mode interface for pwnagotchi.
+#
+# Replaces upstream's /usr/bin/monstart, which is image-only scaffolding: it
+# sources /usr/bin/pwnlib (shipped by their pi-gen stage3 patches, not by the
+# Python package) and is hardwired to wlan0/wlan0mon plus a brcmfmac module
+# reload. That is correct for the onboard Broadcom radio and wrong for every
+# mainline mac80211 adapter -- an mt76x2u or rtl88xxau stick needs no firmware
+# poking at all, just a second vif.
+#
+# Interface pair comes from /etc/conf.d/pwnagotchi (or the environment), so it
+# matches whatever main.iface says in config.toml.
+set -eu
+
+[ -r /etc/conf.d/pwnagotchi ] && . /etc/conf.d/pwnagotchi
+
+IFACE="${PWNAGOTCHI_IFACE:-wlan0}"
+MON="${PWNAGOTCHI_MON_IFACE:-${IFACE}mon}"
+
+# Already there (a crashed run, or fix_services calling us twice) -- make sure
+# it is up and stop. Never tear down a working capture interface here.
+if [ -e "/sys/class/net/${MON}" ]; then
+    ip link set "${MON}" up
+    exit 0
+fi
+
+[ -e "/sys/class/net/${IFACE}" ] || {
+    echo "monstart: ${IFACE} does not exist -- is the adapter plugged in?" >&2
+    exit 1
+}
+
+command -v rfkill >/dev/null 2>&1 && rfkill unblock wifi
+
+# Some drivers refuse to add a monitor vif while the managed one is running.
+ip link set "${IFACE}" down || true
+iw dev "${IFACE}" interface add "${MON}" type monitor || {
+    echo "monstart: could not add ${MON} on ${IFACE}" >&2
+    ip link set "${IFACE}" up || true
+    exit 1
+}
+ip link set "${MON}" up

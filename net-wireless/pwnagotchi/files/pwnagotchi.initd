@@ -1,0 +1,25 @@
+#!/sbin/openrc-run
+# Copyright 1999-2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="pwnagotchi - instruments bettercap for WiFi handshake capture"
+
+command="/usr/bin/pwnagotchi"
+command_args="${PWNAGOTCHI_OPTS}"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/pwnagotchi/pwnagotchi-stdout.log"
+error_log="/var/log/pwnagotchi/pwnagotchi-stderr.log"
+
+# 30 s, matching the systemd unit's RestartSec: bettercap's API takes a moment
+# to come up and pwnagotchi exits rather than waiting for it.
+respawn_delay=30
+
+depend() {
+    need net
+    after bettercap pwngrid-peer
+}
+
+start_pre() {
+    checkpath -d -m 0750 -o root:root /var/log/pwnagotchi
+}
