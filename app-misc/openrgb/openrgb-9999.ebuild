@@ -7,7 +7,8 @@
 #    ResourceManager.cpp to DetectionManager.cpp) and is obsolete anyway on
 #    merged-usr profiles: the code now probes /usr/lib/udev/rules.d, exactly
 #    where udev_dorules lands via the /lib -> usr/lib merge.
-#  - Adds the Gainward RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323),
+#  - Adds the Gainward RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323,
+#    shared with the 5080 Phoenix; lives in PalitGPUController since 2026-09),
 #    not yet upstream — this host's GPU.
 # 2026-09-03: dropped OpenRGB-0.7-r1-udev.patch — upstream 7854c491
 # (2026-08-24) removed udev rules from the repo AND the build entirely; the
