@@ -10,6 +10,8 @@
 #  - Adds the Gainward RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323,
 #    shared with the 5080 Phoenix; lives in PalitGPUController since 2026-09),
 #    not yet upstream — this host's GPU.
+#  - Adds the ASUS ROG Swift PG34WCDN (0b05:1d38) to AsusMonitorController —
+#    this host's monitor; same HID profile as the PG32UCDM generation.
 # 2026-09-03: dropped OpenRGB-0.7-r1-udev.patch — upstream 7854c491
 # (2026-08-24) removed udev rules from the repo AND the build entirely; the
 # executable generates them now (--print-udev-rules), and the .pro installs a
@@ -50,6 +52,7 @@ BDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/openrgb-9999-gainward-rtx5070ti-phoenix.patch
+	"${FILESDIR}"/openrgb-9999-asus-pg34wcdn-monitor.patch
 )
 
 CHECKREQS_DISK_BUILD="2G"

@@ -1,0 +1,26 @@
+ASUS ROG Swift PG34WCDN: register the monitor's Aura HID interface.
+
+The 34" WOLED (2024) enumerates as 0b05:1d38 "ROG Gaming Display Aura Device"
+with the same HID profile as the PG32UCDM/XG27ACDNG generation already handled
+by AsusMonitorController: interface 1, usage page 0xFF72, usage 0xA1, 64-byte
+reports with report ID 0xEC — the ID the controller's packets carry. Not
+upstream yet; pending a static-colour check on the hardware.
+
+--- a/Controllers/AsusMonitorController/AsusMonitorControllerDetect.cpp
++++ b/Controllers/AsusMonitorController/AsusMonitorControllerDetect.cpp
+@@ -27,6 +27,7 @@
+ #define ASUS_ROG_SWIFT_PG32UCDM_PID                    0x1B2B
+ #define ASUS_ROG_SWIFT_PG32UCDMR_PID                   0x1C9B
+ #define ASUS_ROG_SWIFT_PG32UCDP_PID                    0x1BCA
++#define ASUS_ROG_SWIFT_PG34WCDN_PID                    0x1D38
+ #define ASUS_ROG_AURA_MONITOR_LIGHT_BAR_PID            0x1AC8
+ 
+ DetectedControllers DetectAsusMonitorControllers(hid_device_info* info, const std::string& name)
+@@ -52,6 +53,7 @@
+ REGISTER_HID_DETECTOR_IPU("Asus ROG SWIFT PG32UCDM",    DetectAsusMonitorControllers, ASUS_VID, ASUS_ROG_SWIFT_PG32UCDM_PID,    1, 0xFF72, 0x00A1);
+ REGISTER_HID_DETECTOR_IPU("Asus ROG SWIFT PG32UCDMR",   DetectAsusMonitorControllers, ASUS_VID, ASUS_ROG_SWIFT_PG32UCDMR_PID,   1, 0xFF72, 0x00A1);
+ REGISTER_HID_DETECTOR_IPU("Asus ROG SWIFT PG32UCDP",    DetectAsusMonitorControllers, ASUS_VID, ASUS_ROG_SWIFT_PG32UCDP_PID,    1, 0xFF72, 0x00A1);
++REGISTER_HID_DETECTOR_IPU("Asus ROG SWIFT PG34WCDN",    DetectAsusMonitorControllers, ASUS_VID, ASUS_ROG_SWIFT_PG34WCDN_PID,    1, 0xFF72, 0x00A1);
+ /*---------------------------------------------------------*\
+ | ALB01 exposes the Aura HID collection on interface 2.     |
+ \*---------------------------------------------------------*/
