@@ -1,0 +1,78 @@
+Do not abort the client when a monitor reports an out-of-spec MCCS version.
+
+The ASUS ROG Swift PG34WCDN answers VCP feature xDF with sh=0x02 sl=0x12,
+i.e. "2.18", which is not one of the defined MCCS versions (1.0, 2.0, 2.1,
+2.2, 3.0) even though its own capabilities string says mccs_ver(2.2). The
+raw sh/sl pair was stored unvalidated, so every later version check failed,
+and ddca_get_feature_list_by_dref() aborted the process on an assert: ddcui
+died with SIGABRT the instant the user opened the feature view
+(api_metadata.c:256, ddcui 0.6.0 + ddcutil 2.2.6, 2026-09-18).
+
+1. ddc_vcp_version.c substitutes the highest defined version carrying the
+   same major number (2.x -> 2.2), which for this monitor is exactly what
+   its capabilities string declares, and logs the substitution.
+2. api_metadata.c logs instead of asserting: vspec is used nowhere below
+   (the feature set is built from dref), and a library entry point must not
+   kill its client. Deliberately NOT a `break` out of WITH_VALIDATED_DR4 —
+   that macro is a do/while(0) whose dref_unlock() runs after the action, so
+   breaking early would leak the display lock.
+
+Still present upstream in 3.0.1. Verified on this host: feature list returns
+142 features instead of aborting.
+
+diff --git a/src/ddc/ddc_vcp_version.c b/src/ddc/ddc_vcp_version.c
+index d26d055dd..0c3368148 100644
+--- a/src/ddc/ddc_vcp_version.c
++++ b/src/ddc/ddc_vcp_version.c
+@@ -124,6 +124,29 @@ set_vcp_version_xdf_by_dh(Display_Handle * dh)
+            else {
+               dh->dref->vcp_version_xdf.major = parsed_response_loc->sh; // pvalrec->val.c_nc.sh;
+               dh->dref->vcp_version_xdf.minor = parsed_response_loc->sl; // pvalrec->val.c_nc.sl;
++              /* Monitors do report versions that are not in the spec (seen on an
++               * ASUS PG34WCDN: sh=0x02 sl=0x12, i.e. "2.18", while its own
++               * capabilities string says mccs_ver(2.2)). Storing the raw pair
++               * makes every later version check fail, up to and including an
++               * assert in the public API. Substitute the highest defined version
++               * carrying the same major number. */
++              if (!vcp_version_is_valid(dh->dref->vcp_version_xdf, /*allow_unknown*/ false)) {
++                 DDCA_MCCS_Version_Spec substitute = DDCA_VSPEC_UNKNOWN;
++                 switch (dh->dref->vcp_version_xdf.major) {
++                 case 1:  substitute = DDCA_VSPEC_V10;  break;
++                 case 2:  substitute = DDCA_VSPEC_V22;  break;
++                 case 3:  substitute = DDCA_VSPEC_V30;  break;
++                 default: break;
++                 }
++                 MSG_W_SYSLOG(DDCA_SYSLOG_WARNING,
++                       "Monitor reports undefined MCCS version %d.%d, using %s instead."
++                       " Defined versions: %s",
++                       dh->dref->vcp_version_xdf.major,
++                       dh->dref->vcp_version_xdf.minor,
++                       format_vspec(substitute),
++                       valid_vcp_versions);
++                 dh->dref->vcp_version_xdf = substitute;
++              }
+               DBGMSF(debug, "Set dh->dref->vcp_version_xdf to %d.%d, %s",
+                          dh->dref->vcp_version_xdf.major,
+                          dh->dref->vcp_version_xdf.minor,
+diff --git a/src/libmain/api_metadata.c b/src/libmain/api_metadata.c
+index 372678c5f..88913239c 100644
+--- a/src/libmain/api_metadata.c
++++ b/src/libmain/api_metadata.c
+@@ -253,7 +253,16 @@ ddca_get_feature_list_by_dref(
+                // assert( !vcp_version_eq( vspec, DDCA_VSPEC_UNQUERIED) );
+                // Whether a feature is a table feature can vary by version, so can't
+                // specify VCP_SPEC_ANY to request feature ids in any version
+-               assert(vcp_version_is_valid(vspec, /* allow unknown */ false));
++               /* A library call must never abort its client. vspec is used
++                * nowhere below (the feature set is built from dref), so an
++                * undefined version only has to be reported, not fatal. Before
++                * this, a monitor answering feature xDF out of spec killed ddcui
++                * with SIGABRT as soon as the feature view was opened. */
++               if (!vcp_version_is_valid(vspec, /* allow unknown */ false)) {
++                  MSG_W_SYSLOG(DDCA_SYSLOG_ERROR,
++                        "Undefined MCCS version %s reported for %s",
++                        format_vspec_verbose(vspec), dref_repr_t(dref));
++               }
+ 
+                switch (feature_set_id) {
+                case DDCA_SUBSET_KNOWN:
