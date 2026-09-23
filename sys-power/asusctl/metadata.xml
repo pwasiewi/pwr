@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>78680344+reckor-usa@users.noreply.github.com</email>
+		<name>MM</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">OpenGamingCollective/asusctl</remote-id>
+	</upstream>
+	<use>
+		<flag name="acpi">Pull in <pkg>sys-power/acpi_call</pkg> and load it at boot (dGPU power control on some older models; an out-of-tree kernel module)</flag>
+		<flag name="gui">Build and install rog-control-center, the graphical front end</flag>
+		<flag name="X">Enable the X11 backend of rog-control-center in addition to Wayland</flag>
+	</use>
+</pkgmetadata>
