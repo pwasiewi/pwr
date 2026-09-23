@@ -12,6 +12,10 @@ EAPI=8
 #    libayatana-appindicator dropped (sdl2-sys never builds, there is no
 #    libseat crate, the tray icon is ksni over D-Bus), udev added for the
 #    daemon, the GUI's runtime-loaded display libraries made explicit;
+#  - no >=sys-power/power-profiles-daemon: asusd 6.5.0 drives the kernel
+#    platform_profile directly and never calls the ppd D-Bus API (no
+#    reference to it anywhere in the source). Requiring ppd soft-blocked
+#    sys-apps/tuned[ppd], which powerdevil already uses for the same API;
 #  - no clang/LLVM: Cargo.lock does contain bindgen, but only behind slint's
 #    Linux-KMS backend, which the workspace's feature set never enables —
 #    bindgen is not compiled (so reckor's RUST_NEEDS_LLVM is unnecessary);
@@ -762,7 +766,6 @@ COMMON_DEPEND="
 RDEPEND="
 	${COMMON_DEPEND}
 	sys-apps/dbus
-	>=sys-power/power-profiles-daemon-0.13
 	acpi? ( sys-power/acpi_call )
 	gui? (
 		dev-libs/wayland
