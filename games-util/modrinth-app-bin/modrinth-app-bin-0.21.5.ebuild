@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit unpacker xdg
+inherit desktop unpacker xdg
 
 # Upstream monorepo is modrinth/code (formerly theseus); the desktop app
 # releases carry the Modrinth.App_* asset names.
@@ -21,15 +21,17 @@ SLOT="0"
 KEYWORDS="-* ~amd64"
 RESTRICT="strip"
 
-# Direct NEEDED sonames of usr/bin/ModrinthApp (objdump -p, 0.17.10):
+# Direct NEEDED sonames of usr/bin/ModrinthApp (objdump -p, 0.21.5):
 # libwebkit2gtk-4.1 + libjavascriptcoregtk-4.1, libgtk-3/libgdk-3,
-# libsoup-3.0, libglib/gio/gobject, libcairo, libgdk_pixbuf. The deb's own
-# Depends agrees (libwebkit2gtk-4.1-0, libgtk-3-0). No appindicator — the
+# libsoup-3.0, libglib/gio/gobject, libcairo, libgdk_pixbuf, and libdbus-1
+# (new since 0.17.10; the deb's Depends lists only libwebkit2gtk-4.1-0 and
+# libgtk-3-0). No appindicator — the
 # binary neither links nor dlopens a tray library (strings-verified).
 # Java is NOT a dependency: the launcher downloads and manages its own JRE
 # per Minecraft version.
 RDEPEND="
 	dev-libs/glib:2
+	sys-apps/dbus
 	net-libs/libsoup:3.0
 	net-libs/webkit-gtk:4.1
 	x11-libs/cairo
@@ -47,6 +49,5 @@ src_install() {
 
 	# upstream ships the desktop entry with a space in the filename;
 	# keep it — StartupWMClass and the menu entry reference it as-is
-	insinto /usr/share/applications
-	doins usr/share/applications/"Modrinth App.desktop"
+	domenu usr/share/applications/"Modrinth App.desktop"
 }
