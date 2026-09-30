@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Strata is a C++/CUDA inference engine written for one model family,
+    Qwen3.8-Flash-Next (qwen4exp MoE). It keeps a per-expert VRAM cache
+    filled from a routing profile and adapted to the conversation, computes
+    GPU- and CPU-resident experts of a layer concurrently, and decodes with
+    the model's own MTP head. Installed under /opt/strata; strata-serve starts
+    the OpenAI/Anthropic-compatible server, strata-tool runs the pack tools.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">Niko1221/Strata</remote-id>
+  </upstream>
+</pkgmetadata>

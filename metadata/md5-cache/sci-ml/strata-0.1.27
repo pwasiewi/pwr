@@ -1,0 +1,17 @@
+BDEPEND=app-alternatives/ninja >=dev-build/cmake-3.28.5
+DEFINED_PHASES=compile configure install postinst prepare setup test
+DEPEND=dev-util/nvidia-cuda-toolkit:=
+DESCRIPTION=CUDA inference engine for Qwen3.8-Flash-Next with a per-expert VRAM cache
+EAPI=8
+HOMEPAGE=https://github.com/Niko1221/Strata
+INHERIT=cmake cuda optfeature python-single-r1
+IUSE=cpu_flags_x86_avx cpu_flags_x86_avx2 cpu_flags_x86_avx512f cpu_flags_x86_f16c cpu_flags_x86_fma3 python_single_target_python3_12 python_single_target_python3_13 python_single_target_python3_14
+KEYWORDS=~amd64
+LICENSE=MIT OFL-1.1
+RDEPEND=dev-util/nvidia-cuda-toolkit:= python_single_target_python3_12? ( dev-lang/python:3.12 ) python_single_target_python3_13? ( dev-lang/python:3.13 ) python_single_target_python3_14? ( dev-lang/python:3.14 ) x11-drivers/nvidia-drivers python_single_target_python3_12? ( dev-python/jinja2[python_targets_python3_12(-)] dev-python/numpy[python_targets_python3_12(-)] dev-python/pillow[python_targets_python3_12(-)] dev-python/psutil[python_targets_python3_12(-)] dev-python/regex[python_targets_python3_12(-)] ) python_single_target_python3_13? ( dev-python/jinja2[python_targets_python3_13(-)] dev-python/numpy[python_targets_python3_13(-)] dev-python/pillow[python_targets_python3_13(-)] dev-python/psutil[python_targets_python3_13(-)] dev-python/regex[python_targets_python3_13(-)] ) python_single_target_python3_14? ( dev-python/jinja2[python_targets_python3_14(-)] dev-python/numpy[python_targets_python3_14(-)] dev-python/pillow[python_targets_python3_14(-)] dev-python/psutil[python_targets_python3_14(-)] dev-python/regex[python_targets_python3_14(-)] )
+REQUIRED_USE=^^ ( python_single_target_python3_12 python_single_target_python3_13 python_single_target_python3_14 )
+RESTRICT=test
+SLOT=0
+SRC_URI=https://github.com/Niko1221/Strata/archive/refs/tags/v0.1.27.tar.gz -> strata-0.1.27.tar.gz https://github.com/ggml-org/llama.cpp/archive/3cf03257f219afbe7334045ff7c6a06ac68c627d.tar.gz -> llama.cpp-3cf03257f219afbe7334045ff7c6a06ac68c627d.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	3530055400d05e64deaba3042af30af6	cuda	8b660e223a1695e3884ee4c7dc2c5059	optfeature	58cc13bdc4e9a204077e1e7c9a1d7988	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	python-utils-r1	85d8fb641bb0e79b1ae893556e9c57bc	python-single-r1	47d8ac9be330c9366112b78fd4f8ce57
+_md5_=ec05e90b1383332b60c25faeee22b208
