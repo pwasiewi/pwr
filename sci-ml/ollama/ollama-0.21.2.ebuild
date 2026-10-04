@@ -53,7 +53,11 @@ declare -rgA CPU_FEATURES=(
 )
 add_cpu_features_use() {
 	for flag in "${!CPU_FEATURES[@]}"; do
-		IFS=$';' read -r arch use <<< "${CPU_FEATURES[${flag}]}"
+		# parameter expansion, not a <<< here-string: bash needs a temp file for those,
+		# which the metadata (depend) phase forbids, so the whole ebuild became invisible
+		local spec=${CPU_FEATURES[${flag}]} arch use=
+		arch=${spec%%;*}
+		[[ ${spec} == *";"* ]] && use=${spec#*;}
 		IUSE+=" cpu_flags_${arch}_${use:-${flag,,}}"
 	done
 }
