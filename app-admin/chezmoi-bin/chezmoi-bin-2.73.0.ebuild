@@ -31,7 +31,7 @@ src_install() {
 	dobin chezmoi
 
 	newbashcomp completions/chezmoi-completion.bash chezmoi
-	dozshcomp completions/chezmoi.zsh
+	newzshcomp completions/chezmoi.zsh _chezmoi
 	dofishcomp completions/chezmoi.fish
 
 	dodoc README.md
