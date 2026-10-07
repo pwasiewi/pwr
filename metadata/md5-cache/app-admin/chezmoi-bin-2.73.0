@@ -1,0 +1,12 @@
+DEFINED_PHASES=install
+DESCRIPTION=Manage your dotfiles across multiple diverse machines, securely
+EAPI=8
+HOMEPAGE=https://www.chezmoi.io https://github.com/twpayne/chezmoi
+INHERIT=shell-completion
+KEYWORDS=-* ~amd64 ~arm64
+LICENSE=MIT
+RESTRICT=mirror strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/twpayne/chezmoi/releases/download/v2.73.0/chezmoi_2.73.0_linux_amd64.tar.gz ) arm64? ( https://github.com/twpayne/chezmoi/releases/download/v2.73.0/chezmoi_2.73.0_linux_arm64.tar.gz )
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	shell-completion	42587a281b8b546975e45fad82edcb50
+_md5_=89e035962dea77fdb33e94f20bc869d4

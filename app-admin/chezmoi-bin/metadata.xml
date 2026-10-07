@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>pwasiewi@gmail.com</email>
+    <name>Piotr Wasiewicz</name>
+  </maintainer>
+  <longdescription>
+    chezmoi manages dotfiles across multiple machines from a single git
+    repository: per-host templates, files encrypted with age or gpg, and
+    secrets pulled from password managers. This package installs the
+    upstream prebuilt binary and the bash/zsh/fish completions.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">twpayne/chezmoi</remote-id>
+  </upstream>
+</pkgmetadata>
