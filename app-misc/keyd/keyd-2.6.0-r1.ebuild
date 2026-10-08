@@ -9,10 +9,12 @@
 #     or catalyst build silently drops it from the binpkg) — USE=systemd decides
 #   - upstream's data/sysusers.d is dropped: acct-group/keyd owns the group
 #   - docs no longer end up nested in /usr/share/doc/${PF}/keyd/
+#   - -r1: CC is exported — the Makefile calls $(CC) without setting it, so make
+#     fell back to the BUILD host's cc (cross build died on -march=armv8-a)
 
 EAPI=8
 
-inherit linux-info
+inherit linux-info toolchain-funcs
 
 DESCRIPTION="A key remapping daemon for linux"
 HOMEPAGE="https://github.com/rvaiya/keyd"
@@ -43,6 +45,11 @@ pkg_pretend() {
 
 		check_extra_config
 	fi
+}
+
+src_compile() {
+	tc-export CC
+	emake
 }
 
 src_install() {
