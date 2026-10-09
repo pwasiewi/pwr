@@ -39,6 +39,14 @@ python_prepare_all() {
 	if grep -qE '~=|<3\.12' pyproject.toml; then
 		die "pyproject.toml still carries pins — the sed above no longer matches upstream"
 	fi
+	# [tool.hatch.build] include lists "pyproject.toml" (and "LICENCE",
+	# misspelt): hatchling then installs pyproject.toml TOP-LEVEL in
+	# site-packages and the stray-files QA check fails the install
+	# no $ anchor: upstream's pyproject.toml has CRLF line endings
+	sed -i -e '/^    "pyproject\.toml",/d' -e '/^    "LICENCE",/d' pyproject.toml || die
+	if sed -n '/^include = \[/,/^\]/p' pyproject.toml | grep -q 'pyproject\.toml'; then
+		die "pyproject.toml is still in the hatch include list"
+	fi
 	distutils-r1_python_prepare_all
 }
 
