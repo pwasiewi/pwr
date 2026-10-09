@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>pwasiewi@gmail.com</email>
+    <name>Piotr Wasiewicz</name>
+  </maintainer>
+  <longdescription>
+    AutoEq turns a headphone frequency-response measurement and a target curve
+    into equalizer settings: a minimum- or linear-phase impulse response for
+    convolution (EasyEffects .irs, PipeWire), parametric EQ (Equalizer APO /
+    EasyEffects import), fixed-band and graphic EQ. Command: autoeq (or
+    python -m autoeq). Upstream's version pins are relaxed; output verified
+    identical on current numpy/scipy.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">jaakkopasanen/AutoEq</remote-id>
+    <remote-id type="pypi">autoeq</remote-id>
+  </upstream>
+</pkgmetadata>
