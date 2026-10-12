@@ -1,0 +1,20 @@
+# User unit: `systemctl --user start camilladsp`. Processes %h/.config/camilladsp/active.yml
+# (a symlink switched by `dspctl camilla <name>`), websocket control on 127.0.0.1:1234.
+# Not enabled by default: the dspctl switch script starts it so that it never runs next
+# to EasyEffects, which relinks every stream into its own sink.
+[Unit]
+Description=CamillaDSP audio processor
+Documentation=https://github.com/HEnquist/camilladsp
+After=pipewire.service wireplumber.service
+Requires=pipewire.service
+ConditionPathExists=%h/.config/camilladsp/active.yml
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/camilladsp -p 1234 %h/.config/camilladsp/active.yml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

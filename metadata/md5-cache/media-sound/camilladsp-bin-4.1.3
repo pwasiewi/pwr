@@ -1,0 +1,15 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=install postinst
+DESCRIPTION=Flexible audio DSP: convolution, biquads, mixers, loudness (upstream binaries)
+EAPI=8
+HOMEPAGE=https://github.com/HEnquist/camilladsp
+INHERIT=systemd
+IUSE=+pipewire pulseaudio
+KEYWORDS=-* ~amd64 ~arm64
+LICENSE=GPL-3
+RDEPEND=media-libs/alsa-lib pipewire? ( media-video/pipewire ) !pipewire? ( pulseaudio? ( media-libs/libpulse ) )
+RESTRICT=mirror
+SLOT=0
+SRC_URI=amd64? ( pipewire? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-pipewire-amd64.tar.gz -> camilladsp-bin-4.1.3-pipewire-amd64.tar.gz ) !pipewire? ( pulseaudio? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-pulseaudio-amd64.tar.gz -> camilladsp-bin-4.1.3-pulseaudio-amd64.tar.gz ) !pulseaudio? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-amd64.tar.gz -> camilladsp-bin-4.1.3-alsa-amd64.tar.gz ) ) ) arm64? ( pipewire? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-pipewire-aarch64.tar.gz -> camilladsp-bin-4.1.3-pipewire-aarch64.tar.gz ) !pipewire? ( pulseaudio? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-pulseaudio-aarch64.tar.gz -> camilladsp-bin-4.1.3-pulseaudio-aarch64.tar.gz ) !pulseaudio? ( https://github.com/HEnquist/camilladsp/releases/download/v4.1.3/camilladsp-linux-aarch64.tar.gz -> camilladsp-bin-4.1.3-alsa-aarch64.tar.gz ) ) )
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	systemd	a964c0cbe818b5729da1dbfcee5be861
+_md5_=25246bd66a8e9ecd699ab5678f18a825

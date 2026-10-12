@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<use>
+		<flag name="pipewire">Install the upstream build with the native PipeWire backend (capture/playback type PipeWire)</flag>
+		<flag name="pulseaudio">Install the upstream build with the PulseAudio backend instead of the plain ALSA one (ignored when pipewire is set)</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">HEnquist/camilladsp</remote-id>
+	</upstream>
+</pkgmetadata>
