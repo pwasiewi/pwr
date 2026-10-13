@@ -4,7 +4,7 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="8"
+K_GENPATCHES_VER="11"
 K_SECURITY_UNSUPPORTED="1"
 K_NOSETEXTRAVERSION="1"
 K_NODRYRUN="yes"
@@ -14,14 +14,12 @@ detect_version
 detect_arch
 
 # Forked from ::gentoo's zen-sources-7.1.5 and bumped: the tree still
-# carries only 7.1.5, and the live images want v7.2.7-zen1 (upstream
-# release 2026-09-21; the 7.1 series went EOL with 7.1.13 on 2026-09-02).
+# carries only 7.2.7, and the live images want v7.2.10-zen1 (7.2.7 was
+# released 2026-09-21; the 7.1 series went EOL with 7.1.13 on 2026-09-02).
 # K_GENPATCHES_VER follows the genpatches that CARRIES the stable patch --
 # there is no patch-7.2.7.xz in SRC_URI, the tree is linux-7.2.tar.xz plus
 # genpatches 1000..1006_linux-7.2.*.patch, so 7.2.N needs genpatches-7.2-(N+1)
-# (7.2.7 -> 8, which is also what gentoo-sources would use). ::gentoo's
-# gentoo-sources stops at 7.2.6 for now; -8 is published and does contain
-# 1006_linux-7.2.7.patch.
+# (7.2.10 -> 11, the same value ::gentoo's gentoo-sources-7.2.10 uses).
 DESCRIPTION="The Zen Kernel Live Sources"
 HOMEPAGE="https://github.com/zen-kernel"
 
