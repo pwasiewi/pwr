@@ -1,0 +1,360 @@
+Fix two SIGSEGVs hit by short-lived CLI runs (e.g. `openrgb -c 000000 -m direct`),
+most often when several instances run at once. Not upstream yet; both bugs are
+still present on master 6a10f77c (2026-10-15).
+
+1. ASUS Aura USB (mainboard, addressable, Strix LC, Ryuo): GetConfigTable() ran
+   `delete this` from inside the constructor when the config-table reply did
+   not match. The derived constructor and the detector then used the freed,
+   half-built object -> jump to address 0 on the detection thread
+   (kernel: "segfault at 0 ip 0000000000000000 ... error 14").
+   The mismatch itself comes from hidraw delivering every input report to every
+   open handle: a second openrgb instance's replies land in our queue. Now:
+   read until the matching reply ID (bounded, 1 s timeout per report), throw on
+   failure, and every detector constructing an AuraUSBController subclass
+   catches it and closes the handle.
+
+2. Logitech HID++ 2.0 receiver watcher: the watchers were stopped only by a
+   static destructor defined BEFORE hidpp20_build_targets/hidpp20_building in
+   LogitechControllerDetect.cpp. Statics die in reverse order, so at exit a
+   worker still in HIDPP20BuildForWatcher() touched destroyed sets
+   (SIGSEGV in ~HIDPP20BuildClaim / std::set::erase while main() was in
+   exit() -> ~HIDPP20WatcherShutdown -> thread::join). Now the watchers are
+   stopped from a new DetectionManager cleanup hook at the start of
+   Cleanup() (before the controller list is cleared, so a late-built controller
+   is deleted with the rest), and the static fallback object moved to the end
+   of the file. Cleanup hooks are a file-scope list in DetectionManager.cpp, so
+   the DetectionManager class layout seen by plugins is unchanged.
+
+diff --git a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
+index 178bd146..7068f0bb 100644
+--- a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
++++ b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
+@@ -10,10 +10,37 @@
+ \*---------------------------------------------------------*/
+ 
+ #include <cstring>
++#include <stdexcept>
+ #include "AsusAuraUSBController.h"
+ #include "LogManager.h"
+ #include "StringUtils.h"
+ 
++/*---------------------------------------------------------*\
++| Read until the reply to our own request arrives. hidraw   |
++| hands every input report to every open handle, so when    |
++| another process (a second openrgb instance) talks to the  |
++| same controller at the same time, its replies land in our |
++| queue too and the first report read is not necessarily    |
++| ours. Give up after a few reports or a read timeout.      |
++\*---------------------------------------------------------*/
++static bool AuraUSBReadReply(hid_device* dev, unsigned char* buf, size_t len, unsigned char reply_id)
++{
++    for(int attempt = 0; attempt < 8; attempt++)
++    {
++        if(hid_read_timeout(dev, buf, len, 1000) <= 0)
++        {
++            return(false);
++        }
++
++        if(buf[1] == reply_id)
++        {
++            return(true);
++        }
++    }
++
++    return(false);
++}
++
+ AuraUSBController::AuraUSBController(hid_device* dev_handle, const char* path, std::string dev_name)
+ {
+     dev         = dev_handle;
+@@ -86,12 +113,11 @@ void AuraUSBController::GetConfigTable()
+     | Send packet                                           |
+     \*-----------------------------------------------------*/
+     hid_write(dev, usb_buf, 65);
+-    hid_read(dev, usb_buf, 65);
+ 
+     /*-----------------------------------------------------*\
+-    | Copy the firmware string if the reply ID is correct   |
++    | Copy the config table if the reply ID is correct      |
+     \*-----------------------------------------------------*/
+-    if(usb_buf[1] == 0x30)
++    if(AuraUSBReadReply(dev, usb_buf, 65, 0x30))
+     {
+         memcpy(config_table, &usb_buf[4], 60);
+ 
+@@ -110,8 +136,15 @@ void AuraUSBController::GetConfigTable()
+     }
+     else
+     {
++        /*-------------------------------------------------*\
++        | This runs inside the constructor: "delete this"   |
++        | here freed a half-built object that the derived   |
++        | constructor and the detector then kept using      |
++        | (SIGSEGV, jump to address 0). Throw instead; the  |
++        | detectors catch it and close the handle.          |
++        \*-------------------------------------------------*/
+         LOG_INFO("[%s] Could not read config table, can not add device", version);
+-        delete this;
++        throw std::runtime_error("could not read the Aura USB config table");
+     }
+ }
+ 
+@@ -134,12 +167,11 @@ void AuraUSBController::GetFirmwareVersion()
+     | Send packet                                           |
+     \*-----------------------------------------------------*/
+     hid_write(dev, usb_buf, 65);
+-    hid_read(dev, usb_buf, 65);
+ 
+     /*-----------------------------------------------------*\
+     | Copy the firmware string if the reply ID is correct   |
+     \*-----------------------------------------------------*/
+-    if(usb_buf[1] == 0x02)
++    if(AuraUSBReadReply(dev, usb_buf, 65, 0x02))
+     {
+         memcpy(version, &usb_buf[2], 16);
+     }
+diff --git a/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp b/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
+index 13092579..8c854710 100644
+--- a/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
++++ b/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
+@@ -153,10 +153,22 @@ DetectedControllers DetectAsusAuraUSBTerminal(hid_device_info* info, const std::
+ 
+     if(dev)
+     {
+-        AuraAddressableController* controller               = new AuraAddressableController(dev, info->path, name);
+-        RGBController_AuraUSB*     rgb_controller           = new RGBController_AuraUSB(controller);
++        try
++        {
++            AuraAddressableController* controller               = new AuraAddressableController(dev, info->path, name);
++            RGBController_AuraUSB*     rgb_controller           = new RGBController_AuraUSB(controller);
+ 
+-        detected_controllers.push_back(rgb_controller);
++            detected_controllers.push_back(rgb_controller);
++        }
++        catch(const std::runtime_error& ex)
++        {
++            /*---------------------------------------------*\
++            | The controller constructor threw before it    |
++            | took ownership of the handle                  |
++            \*---------------------------------------------*/
++            LOG_ERROR("[AsusAuraUSB] Terminal: %s", ex.what());
++            hid_close(dev);
++        }
+     }
+ 
+     return(detected_controllers);
+@@ -171,11 +183,23 @@ DetectedControllers DetectAsusAuraUSBAddressable(hid_device_info* info, const st
+ 
+     if(dev)
+     {
+-        DMIInfo                    dmi;
+-        AuraAddressableController* controller               = new AuraAddressableController(dev, info->path, "ASUS " + dmi.getMainboard() + " Addressable");
+-        RGBController_AuraUSB*     rgb_controller           = new RGBController_AuraUSB(controller);
++        try
++        {
++            DMIInfo                    dmi;
++            AuraAddressableController* controller               = new AuraAddressableController(dev, info->path, "ASUS " + dmi.getMainboard() + " Addressable");
++            RGBController_AuraUSB*     rgb_controller           = new RGBController_AuraUSB(controller);
+ 
+-        detected_controllers.push_back(rgb_controller);
++            detected_controllers.push_back(rgb_controller);
++        }
++        catch(const std::runtime_error& ex)
++        {
++            /*---------------------------------------------*\
++            | The controller constructor threw before it    |
++            | took ownership of the handle                  |
++            \*---------------------------------------------*/
++            LOG_ERROR("[AsusAuraUSB] Addressable: %s", ex.what());
++            hid_close(dev);
++        }
+     }
+ 
+     return(detected_controllers);
+@@ -202,6 +226,7 @@ DetectedControllers DetectAsusAuraUSBMotherboards(hid_device_info* info, const s
+         {
+             // reading the config table failed
+             LOG_ERROR("[AsusAuraUSB] An error occured while reading the config table: %s", ex.what());
++            hid_close(dev);
+         }
+     }
+ 
+@@ -273,10 +298,22 @@ DetectedControllers DetectAsusAuraUSBROGStrixLC(hid_device_info* info, const std
+ 
+     if(dev)
+     {
+-        AsusROGStrixLCController*     controller     = new AsusROGStrixLCController(dev, info->path, name);
+-        RGBController_AsusROGStrixLC* rgb_controller = new RGBController_AsusROGStrixLC(controller);
++        try
++        {
++            AsusROGStrixLCController*     controller     = new AsusROGStrixLCController(dev, info->path, name);
++            RGBController_AsusROGStrixLC* rgb_controller = new RGBController_AsusROGStrixLC(controller);
+ 
+-        detected_controllers.push_back(rgb_controller);
++            detected_controllers.push_back(rgb_controller);
++        }
++        catch(const std::runtime_error& ex)
++        {
++            /*---------------------------------------------*\
++            | The controller constructor threw before it    |
++            | took ownership of the handle                  |
++            \*---------------------------------------------*/
++            LOG_ERROR("[AsusAuraUSB] ROG Strix LC: %s", ex.what());
++            hid_close(dev);
++        }
+     }
+ 
+     return(detected_controllers);
+@@ -291,10 +328,22 @@ DetectedControllers DetectAsusAuraUSBRyuoAIO(hid_device_info* info, const std::s
+ 
+     if(dev)
+     {
+-        AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
+-        RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
++        try
++        {
++            AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
++            RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
+ 
+-        detected_controllers.push_back(rgb_controller);
++            detected_controllers.push_back(rgb_controller);
++        }
++        catch(const std::runtime_error& ex)
++        {
++            /*---------------------------------------------*\
++            | The controller constructor threw before it    |
++            | took ownership of the handle                  |
++            \*---------------------------------------------*/
++            LOG_ERROR("[AsusAuraUSB] Ryuo AIO: %s", ex.what());
++            hid_close(dev);
++        }
+     }
+ 
+     return(detected_controllers);
+diff --git a/Controllers/LogitechController/LogitechControllerDetect.cpp b/Controllers/LogitechController/LogitechControllerDetect.cpp
+index 5528ddc4..8d68ed3f 100644
+--- a/Controllers/LogitechController/LogitechControllerDetect.cpp
++++ b/Controllers/LogitechController/LogitechControllerDetect.cpp
+@@ -848,7 +848,10 @@ public:
+     }
+ };
+ 
+-static HIDPP20WatcherShutdown hidpp20_watcher_shutdown;
++/*---------------------------------------------------------*\
++| The HIDPP20WatcherShutdown instance is defined at the end |
++| of this file, see there.                                  |
++\*---------------------------------------------------------*/
+ 
+ static bool HIDPP20BuildForWatcher(const std::string& node_path, uint8_t index);
+ 
+@@ -857,6 +860,16 @@ static void HIDPP20RegisterHook()
+     if(!hidpp20_hook_registered)
+     {
+         DetectionManager::get()->RegisterPreDetectionHook(HIDPP20PreDetectionReset);
++
++        /*-------------------------------------------------*\
++        | Stop the watchers in DetectionManager::Cleanup(), |
++        | not only in a static destructor: a worker that is |
++        | mid-build when main() returns would otherwise     |
++        | register its controller after the controller list |
++        | was cleared and keep its threads running into     |
++        | static destruction.                               |
++        \*-------------------------------------------------*/
++        DetectionManager::get()->RegisterCleanupHook(HIDPP20ShutdownWatchers);
+         LogitechHIDPP20ReceiverWatcher::SetBuilder(HIDPP20BuildForWatcher);
+         hidpp20_hook_registered = true;
+     }
+@@ -1794,3 +1807,15 @@ REGISTER_HID_DETECTOR_IP ("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_
+ REGISTER_HID_DETECTOR_BPU("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_USB,       0xFFA0, 1);
+ REGISTER_HID_DETECTOR_BP ("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_BLUETOOTH, 0xFF43);
+ REGISTER_HID_DETECTOR_BPU("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_BLUETOOTH, 0xFF00, 2);
++
++/*---------------------------------------------------------*\
++| Last static object in this file, so it is destroyed       |
++| first. Statics die in reverse order of definition: placed |
++| next to the watcher registry it ran AFTER                 |
++| hidpp20_build_targets and hidpp20_building were gone,     |
++| while a worker still in HIDPP20BuildForWatcher() used     |
++| them (SIGSEGV in ~HIDPP20BuildClaim at exit). Here it     |
++| joins the watchers while every other static in this file  |
++| is alive. Covers exit() paths that skip Cleanup().        |
++\*---------------------------------------------------------*/
++static HIDPP20WatcherShutdown hidpp20_watcher_shutdown;
+diff --git a/DetectionManager.cpp b/DetectionManager.cpp
+index b076f621..e16d3aad 100644
+--- a/DetectionManager.cpp
++++ b/DetectionManager.cpp
+@@ -224,10 +224,45 @@ std::vector<i2c_smbus_interface*>& DetectionManager::GetI2CBuses()
+     return(i2c_buses);
+ }
+ 
++/*---------------------------------------------------------*\
++| Cleanup hooks live outside the class so that adding them  |
++| does not change the DetectionManager layout seen by       |
++| plugins.                                                  |
++\*---------------------------------------------------------*/
++static std::vector<CleanupHookFunction>  cleanup_hooks;
++static std::mutex                        cleanup_hooks_mutex;
++
++void DetectionManager::RegisterCleanupHook(CleanupHookFunction hook)
++{
++    std::lock_guard<std::mutex> lock(cleanup_hooks_mutex);
++
++    cleanup_hooks.push_back(hook);
++}
++
+ void DetectionManager::Cleanup()
+ {
+     LOG_INFO("[%s] Cleaning up detected devices", DETECTIONMANAGER);
+ 
++    /*-----------------------------------------------------*\
++    | Run cleanup hooks first, while every static object is |
++    | still alive and before the controller list is         |
++    | cleared: a detector thread that registers a           |
++    | controller after ProcessCleanup() would leave it      |
++    | running into static destruction at exit.              |
++    \*-----------------------------------------------------*/
++    std::vector<CleanupHookFunction> hooks;
++
++    {
++        std::lock_guard<std::mutex> lock(cleanup_hooks_mutex);
++
++        hooks.swap(cleanup_hooks);
++    }
++
++    for(std::size_t hook_idx = 0; hook_idx < hooks.size(); hook_idx++)
++    {
++        hooks[hook_idx]();
++    }
++
+     ProcessPreDetectionHooks();
+     ProcessCleanup();
+ }
+diff --git a/DetectionManager.h b/DetectionManager.h
+index 90a6b0e9..00db9309 100644
+--- a/DetectionManager.h
++++ b/DetectionManager.h
+@@ -58,6 +58,7 @@ typedef std::function<DetectedControllers(hid_device_info*, const std::string&)>
+ typedef std::function<DetectedControllers(hidapi_wrapper wrapper, hid_device_info*, const std::string&)>            HIDWrappedDeviceDetectorFunction;
+ typedef std::function<void()>                                                                                       DynamicDetectorFunction;
+ typedef std::function<void()>                                                                                       PreDetectionHookFunction;
++typedef std::function<void()>                                                                                       CleanupHookFunction;
+ 
+ /*---------------------------------------------------------*\
+ | Detector Block Types                                      |
+@@ -189,6 +190,15 @@ public:
+     \*-----------------------------------------------------*/
+     void                                RegisterPreDetectionHook(PreDetectionHookFunction hook);
+ 
++    /*-----------------------------------------------------*\
++    | Cleanup Hook Function Registration Function           |
++    |   Hooks run at the start of Cleanup(), on the caller  |
++    |   thread, before any controller is deleted. Use them  |
++    |   to stop detector-owned threads that may still build |
++    |   and register controllers.                           |
++    \*-----------------------------------------------------*/
++    void                                RegisterCleanupHook(CleanupHookFunction hook);
++
+ #ifdef __linux__
+     /*-----------------------------------------------------*\
+     | Custom Udev Rules Registration Function               |
