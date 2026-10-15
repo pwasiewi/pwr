@@ -41,7 +41,7 @@ DEPEND="${RDEPEND}"
 # 0.4 moved TLS to rustls; aws-lc-sys (rustls' default provider) builds its C
 # with cmake. libgit2 and zlib stay vendored, see the 0.3.1 ebuild for why.
 BDEPEND="
-	>=dev-lang/rust-1.85
+	|| ( >=dev-lang/rust-bin-1.85 >=dev-lang/rust-1.85 )
 	dev-build/cmake
 	virtual/pkgconfig
 	web? ( net-libs/nodejs[npm] )
