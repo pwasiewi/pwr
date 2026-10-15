@@ -35,11 +35,12 @@ LICENSE+=" Apache-2.0 BSD BSD-2 ISC MIT MPL-2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
-# gopacket's pcap binding is cgo against libpcap; libusb backs the HID/NRF24
-# modules and libnetfilter_queue the packet-proxy ones.
+# The only cgo bindings on Linux: gopacket/pcap (libpcap) and google/gousb
+# (libusb, HID/NRF24 modules). The packet-proxy modules use
+# florianl/go-nfqueue/v2, which is pure Go over netlink -- no
+# libnetfilter_queue; the built binary's NEEDED is libpcap + libusb only.
 DEPEND="
 	dev-libs/libusb:1
-	net-libs/libnetfilter_queue
 	net-libs/libpcap
 "
 RDEPEND="${DEPEND}"

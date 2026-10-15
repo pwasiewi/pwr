@@ -6,7 +6,7 @@ EAPI=8
 DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{12..14} )
 
-inherit distutils-r1 systemd
+inherit distutils-r1 optfeature systemd
 
 DESCRIPTION="Raspberry Pi instrumenting bettercap for WiFi handshake capture"
 HOMEPAGE="
@@ -25,33 +25,41 @@ SLOT="0"
 # for developing plugins off-device.
 KEYWORDS="~amd64 ~arm64"
 
-# Derived from the imports actually reached from cli.py, because upstream's
-# pyproject list is wrong in both directions for 2.9.5.8. Named there but
-# imported by no file in the tree: tweepy, smbus2, rpi-lgpio, rpi_hardware_pwm,
-# pisugar. Imported at module scope but NOT declared: prctl (plugins/__init__.py
-# labels its plugin threads with prctl.set_name), which is a hard requirement --
-# pwnagotchi.plugins is on the import path of every run.
-# Everything display- or peripheral-related is lazily imported inside
-# pwnagotchi.ui.hw.display_for() and the plugins, keyed off config -- they are
-# listed in pkg_postinst instead.
+# Derived from an AST walk of every module the start path reaches (cli.py ->
+# identity, agent, ui.display, grid, plugins) plus the plugins enabled in
+# defaults.toml (auto_backup, auto-update, fix_services, grid, webcfg,
+# pwnstore_ui), because upstream's pyproject list is wrong in both directions
+# for 2.9.5.8. Named there but imported by no file in the tree: tweepy, smbus2,
+# rpi-lgpio, rpi_hardware_pwm, pisugar. Imported on the start path but NOT
+# declared:
+#  - prctl: plugins/__init__.py labels its plugin threads with prctl.set_name.
+#  - PIL: ui/fonts.py, ui/view.py, ui/components.py at module scope. Every
+#    display backend's layout(), the headless dummy one included, calls
+#    fonts.setup() -> ImageFont.truetype("DejaVuSansMono"), which needs Pillow's
+#    FreeType module (USE=truetype) and the font file itself.
+# setuptools is real: fs/__init__.py imports distutils.dir_util, which on
+# Python >= 3.12 only exists through setuptools' distutils shim.
+# scapy is reached lazily through utils.extract_from_pcap(), called by the
+# default-on grid plugin for every handshake.
+# Plugin-only or one-off imports (bt-tether, webgpsmap, the legacy YAML config
+# migration, display drivers) are optfeature / pkg_postinst text instead.
 RDEPEND="
 	${PYTHON_DEPS}
 	$(python_gen_cond_dep '
-		dev-python/dbus-python[${PYTHON_USEDEP}]
 		dev-python/file-read-backwards[${PYTHON_USEDEP}]
 		dev-python/flask[${PYTHON_USEDEP}]
 		dev-python/flask-cors[${PYTHON_USEDEP}]
 		dev-python/flask-wtf[${PYTHON_USEDEP}]
+		dev-python/pillow[truetype,${PYTHON_USEDEP}]
 		dev-python/pycryptodome[${PYTHON_USEDEP}]
-		dev-python/python-dateutil[${PYTHON_USEDEP}]
 		dev-python/python-prctl[${PYTHON_USEDEP}]
-		dev-python/pyyaml[${PYTHON_USEDEP}]
 		dev-python/requests[${PYTHON_USEDEP}]
 		dev-python/setuptools[${PYTHON_USEDEP}]
 		dev-python/tomlkit[${PYTHON_USEDEP}]
 		dev-python/websockets[${PYTHON_USEDEP}]
 		net-analyzer/scapy[${PYTHON_USEDEP}]
 	')
+	media-fonts/dejavu
 	net-wireless/iw
 	sys-apps/iproute2
 	net-wireless/pwnagotchi-bettercap
@@ -143,18 +151,27 @@ pkg_postinst() {
 		elog "Run it in the foreground first:  pwnagotchi --manual --debug"
 	fi
 
-	# Not optfeature: none of these are packaged for Gentoo, so there is no atom
-	# to point at. They are imported lazily -- display drivers from inside
-	# pwnagotchi.ui.hw.display_for(), the rest from individual plugins -- so a
-	# missing one costs exactly the panel or plugin that needs it, and the
-	# plugin loader downgrades the ImportError to a warning. The default
-	# ui.display.type is "waveshare_4" (though ui.display.enabled defaults to
-	# false), and that panel needs spidev.
-	elog "Optional Python modules, none of them in Portage (pip into a venv, or"
-	elog "leave the matching display/plugin disabled):"
+	# Lazily imported -- display drivers from inside pwnagotchi.ui.hw.display_for(),
+	# the rest from individual plugins or one-off code paths -- so a missing one
+	# costs exactly the panel or plugin that needs it; the plugin loader
+	# downgrades the ImportError to a warning.
+	optfeature "the bt-tether plugin (BlueZ D-Bus pairing)" \
+		"dev-python/dbus-python net-wireless/bluez"
+	optfeature "the webgpsmap plugin" dev-python/python-dateutil
+	optfeature "migrating a legacy config.yml to config.toml" dev-python/pyyaml
+	optfeature "SPI TFT/LCD panels and the framebuffer display" dev-python/numpy
+	optfeature "I2C battery plugins (ups_lite, wittypi, pisugarx) and I2C panels" \
+		"sys-apps/i2c-tools[python]"
+	optfeature "the DFRobot v2 e-paper display" dev-python/freetype-py
+
+	# None of these are packaged for Gentoo, so there is no atom to point at.
+	# The default ui.display.type is "waveshare_4" (though ui.display.enabled
+	# defaults to false), and that panel needs spidev and gpiozero.
+	elog "Optional Python modules not in Portage (pip into a venv, or leave the"
+	elog "matching display/plugin disabled):"
 	elog "  spidev    SPI panels -- most Waveshare and Adafruit e-paper/LCD"
-	elog "  gpiozero  GPIO-driven panels and the gpio_buttons plugin"
+	elog "  gpiozero  Waveshare/Adafruit e-paper and Waveshare LCD pin control"
+	elog "  RPi.GPIO  the gpio_buttons and ups_lite plugins, many SPI panels"
 	elog "  inky      Pimoroni Inky e-paper"
-	elog "  smbus     I2C battery plugins: ups_lite, wittypi, pisugarx"
 	elog "  toml      only to migrate a legacy dotted-toml config"
 }
