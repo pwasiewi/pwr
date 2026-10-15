@@ -1,0 +1,19 @@
+Fixes multilib (%LIB_DIR% is replaced in the ebuild after PATCHES are applied).
+Respun 2026-10-16 against v2.15.0-rc5 (library_paths() gained parameters; 2.10.0 file needs fuzz 2).
+diff --git a/torch/utils/cpp_extension.py b/torch/utils/cpp_extension.py
+index 8d23e6eb12f..38d4f48e98d 100644
+--- a/torch/utils/cpp_extension.py
++++ b/torch/utils/cpp_extension.py
+@@ -1838,10 +1838,10 @@ def library_paths(device_type: str = "cpu", torch_include_dirs: bool = True, cro
+         paths.extend([TORCH_LIB_PATH])
+ 
+     if device_type == "cuda" and IS_HIP_EXTENSION:
+-        lib_dir = 'lib'
++        lib_dir = '%LIB_DIR%'
+         paths.append(_join_rocm_home(lib_dir))
+         if HIP_HOME is not None:
+-            paths.append(os.path.join(HIP_HOME, 'lib'))
++            paths.append(os.path.join(HIP_HOME, '%LIB_DIR%'))
+     elif device_type == "cuda":
+         if cross_target_platform == "windows":
+             lib_dir = os.path.join('lib', 'x64')

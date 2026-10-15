@@ -15,10 +15,14 @@ when the vLLM engine has LoRA enabled (fast_inference + max_lora_rank);
 the merged-weight sync path is unaffected.
 
 Filter the state dict to the active "default" adapter.
---- a/unsloth_zoo/vllm_utils.py	2026-07-06 20:27:09.900980801 +0200
-+++ b/unsloth_zoo/vllm_utils.py	2026-07-06 20:27:09.918348832 +0200
-@@ -2939,7 +2939,12 @@
-         peft_config = get_peft_config(save_directory)
+
+Respun 2026-10-16 against unsloth-zoo 4bc093a0 (load_lora body moved into
+_build_lora_request by the merged-rollout work; filter line unchanged upstream).
+
+--- a/unsloth_zoo/vllm_utils.py
++++ b/unsloth_zoo/vllm_utils.py
+@@ -6224,7 +6224,12 @@ def _build_lora_request(model, save_directory, load_tensors, lora_request_id, ex
+         peft_config = _live_lora_config(model, save_directory)
          state_dict = model.state_dict()
          items = state_dict.items()
 -        state_dict = {k.replace(".default", ""):v for k, v in items if ".lora_A." in k or ".lora_B." in k}
@@ -28,6 +32,6 @@ Filter the state dict to the active "default" adapter.
 +        # and vLLM's parse_fine_tuned_lora_name() raises
 +        # "... is unsupported LoRA weight".
 +        state_dict = {k.replace(".default", ""):v for k, v in items if ".lora_A.default." in k or ".lora_B.default." in k}
- 
-         # vllm_lora_already_loaded(model)
-         lora_request = LoRARequest(str(lora_request_id), lora_request_id, lora_tensors = state_dict, lora_config = peft_config)
+         if exclude:
+             # Folded into the base weights already: sending them too would apply the delta twice.
+             state_dict = {k: v for k, v in state_dict.items() if re.split(r"\.lora_[AB]\.", k)[0] not in exclude}

@@ -61,7 +61,7 @@ DEPEND="${RDEPEND}
 # Version-prefixed patches track the latest stable base; if a HEAD bump breaks
 # them, refresh the patch (and bump the prefix) — same policy as caffe2-9999.
 PATCHES=(
-	"${FILESDIR}"/${PN}-2.10.0-cpp-extension-multilib.patch
+	"${FILESDIR}"/${PN}-9999-cpp-extension-multilib.patch
 )
 
 src_unpack() {
@@ -69,10 +69,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	# Replace placeholders added by cpp-extension.patch
-	sed -e "s|%LIB_DIR%|$(get_libdir)|g" \
-		-i torch/utils/cpp_extension.py || die
-
 	# Packaging-only wheel: the compiled half is caffe2's job (see the
 	# header). Written INTO the [tool.scikit-build.wheel] section — a
 	# top-level 'wheel.cmake' dotted key would pre-declare the table and
@@ -83,6 +79,14 @@ src_prepare() {
 		die "pyproject.toml drifted — could not disable the cmake half of the wheel"
 
 	distutils-r1_src_prepare
+
+	# Replace placeholders added by cpp-extension.patch. Must run AFTER
+	# distutils-r1_src_prepare: that is where PATCHES are applied, and before
+	# it the placeholder does not exist yet (the literal used to survive).
+	sed -e "s|%LIB_DIR%|$(get_libdir)|g" \
+		-i torch/utils/cpp_extension.py || die
+	grep -q "%LIB_DIR%" torch/utils/cpp_extension.py &&
+		die "%LIB_DIR% placeholder survived in cpp_extension.py"
 }
 
 python_compile() {

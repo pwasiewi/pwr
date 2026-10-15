@@ -60,9 +60,12 @@ src_prepare() {
 	default
 
 	eapply "${FILESDIR}/${PN}-9999-torch-live-version.patch"
-	# shmem estimator can't prove configs safe; always add fallbacks
-	eapply "${FILESDIR}/${PN}-9999-flex-bwd-always-fallback.patch"
+	# flex-bwd-always-fallback dropped 2026-10-16: upstream 653fd2fa (#1165)
+	# fixes the same sm_12x flex backward smem failure (max(staged, linear)
+	# estimate against shared_memory_per_block_optin).
 	# don't pass TRL's frozen "ref" adapter tensors to vLLM
+	# (skip-ref + dealias respun 2026-10-16 on zoo main 4bc093a0; they no
+	# longer apply to the old pin 40963429 — move the zoo pin with them)
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-skip-ref-adapter.patch"
 	# gate/up duplication + aliased-buffer scaling tripwire (bug (c))
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-direct-load-fixes.patch"

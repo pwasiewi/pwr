@@ -156,7 +156,11 @@ DEPEND="
 # except removekineto below which is 9999-only (see comment there).
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.5.1-unbundle_fmt.patch.xz
-	"${FILESDIR}"/${PN}-2.5.1-unbundle_kineto.patch.xz
+	# 9999-only: #193223/#198813 ("Enable Kineto tests") wrapped the
+	# add_subdirectory(KINETO_SOURCE_DIR) block in cmake/Dependencies.cmake
+	# in output-dir/gtest save/restore lines; the 2.5.1 hunk lost its context.
+	# Same change otherwise (respun 2026-10-16 on v2.15.0-rc5).
+	"${FILESDIR}"/${PN}-9999-unbundle_kineto.patch.xz
 	# 9999-only: pytorch HEAD renamed ${Torch_SOURCE_DIR} to
 	# ${CMAKE_SOURCE_DIR} in the PocketFFT block, so the 2.8.0 patch that the
 	# released ebuilds still use no longer applies here.
@@ -171,8 +175,16 @@ PATCHES=(
 	# 9999-only: upstream inserted the CUPTI/perfetto block where this hunk's
 	# trailing context used to be (install(DIRECTORY ...)), in caffe2/
 	# CMakeLists.txt. Identical to the 2.10.0 patch otherwise.
+	# Respun 2026-10-16 on v2.15.0-rc5: #197812 turned the libuv context line
+	# into add_compile_definitions(TORCH_USE_LIBUV). The old file's third
+	# top-level CMakeLists.txt hunk (drop -Werror=format) was out of order and
+	# silently skipped by patch(1) even at e6fbf0c, so it is not carried.
 	"${FILESDIR}"/${PN}-9999-gentoo.patch.xz
-	"${FILESDIR}"/${PN}-2.11.0-mimalloc.patch.xz
+	# 9999-only: #199064 made USE_MIMALLOC a real option (WIN32/aarch64
+	# default), so the top-level CMakeLists.txt hunk that dropped the forced
+	# set(USE_MIMALLOC ON) is obsolete (-DUSE_MIMALLOC is passed below).
+	# Only the c10 system-mimalloc hunk is left.
+	"${FILESDIR}"/${PN}-9999-mimalloc.patch.xz
 	# 9999-specific (not the shared 2.12.0 file, which stays frozen for the
 	# pinned v2.12.0/2.12.1 tag builds): live HEAD added XPU_RUNTIME/
 	# XPU_DRIVER to KinetoEvent::externalId()'s GPU-activity condition list

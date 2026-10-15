@@ -28,9 +28,14 @@ Upstream PR: https://github.com/unslothai/unsloth-zoo/pull/951
 Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
 (same hunk region in load_lora).
 
---- a/unsloth_zoo/vllm_utils.py	2026-07-28 10:00:00.000000000 +0200
-+++ b/unsloth_zoo/vllm_utils.py	2026-07-28 10:00:00.000000000 +0200
-@@ -2983,7 +2983,30 @@
+Respun 2026-10-16 against unsloth-zoo 4bc093a0: load_lora body moved into
+_build_lora_request (merged-rollout work); create_lora_statistics rewritten
+adapter-generic by d01c44cf (#1539). Same three snapshot points (lora_A,
+lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
+
+--- a/unsloth_zoo/vllm_utils.py
++++ b/unsloth_zoo/vllm_utils.py
+@@ -6241,7 +6241,30 @@
          # its keys (e.g. ...lora_A.ref.weight) survive the .default strip
          # and vLLM's parse_fine_tuned_lora_name() raises
          # "... is unsupported LoRA weight".
@@ -59,14 +64,12 @@ Applies after unsloth-zoo-9999-vllm-lora-skip-ref-adapter.patch
 +                for k, v in items
 +                if ".lora_A.default." in k or ".lora_B.default." in k
 +            }
- 
-         # vllm_lora_already_loaded(model)
-         lora_request = LoRARequest(str(lora_request_id), lora_request_id, lora_tensors = state_dict, lora_config = peft_config)
-diff --git a/unsloth_zoo/saving_utils.py b/unsloth_zoo/saving_utils.py
-index f38c353a..4057db73 100644
+         if exclude:
+             # Folded into the base weights already: sending them too would apply the delta twice.
+             state_dict = {k: v for k, v in state_dict.items() if re.split(r"\.lora_[AB]\.", k)[0] not in exclude}
 --- a/unsloth_zoo/saving_utils.py
 +++ b/unsloth_zoo/saving_utils.py
-@@ -208,6 +208,15 @@ def _is_bnb_4bit_base(module):
+@@ -443,6 +443,15 @@
  pass
  
  
@@ -81,8 +84,8 @@ index f38c353a..4057db73 100644
 +
  def _merge_lora(W, lora_stats, name, use_dequant_base = False):
      if lora_stats.lora_A is None or lora_stats.lora_B is None: return W
-     device = _active_merge_device()
-@@ -238,6 +247,7 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
+     # Reached when a model adapts a Conv2d sharing its name with a linear (`proj` is both a
+@@ -488,6 +497,7 @@
          # else: a shape mismatch is structural (e.g. vocab resize handled below), not a dequant
          # failure, so keep the 16bit W here and let the resize path reconcile it.
      W = W.to(device, dtype = torch.float32, non_blocking = True)
@@ -90,7 +93,7 @@ index f38c353a..4057db73 100644
      lora_B = lora_stats.lora_B.to(device, dtype = torch.float32, non_blocking = True)
      lora_A = lora_stats.lora_A.to(device, dtype = torch.float32, non_blocking = True)
      # Handle vocab resize: LoRA may have more rows than base safetensors weight
-@@ -264,6 +274,18 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
+@@ -514,6 +524,18 @@
          W = (magnitude / weight_norm).unsqueeze(1) * W
      if not torch.isfinite(torch.amax(W)).item():
          raise ValueError('Unsloth: Merge failed as there are infinite elements in ' + name)
@@ -109,7 +112,7 @@ index f38c353a..4057db73 100644
      return W
  pass
  
-@@ -438,6 +460,23 @@ def _get_lora_scaling(module):
+@@ -710,6 +732,23 @@
  pass
  
  
@@ -133,26 +136,21 @@ index f38c353a..4057db73 100644
  @torch.inference_mode
  def create_lora_statistics(model, merge_into_original = False, return_state_dict = True):
      # All Unsloth Zoo code licensed under LGPLv3
-@@ -457,19 +496,19 @@ def create_lora_statistics(model, merge_into_original = False, return_state_dict
-         if name == "": continue
- 
-         elif name.endswith(".lora_A.default"):
--            lora_weights[name[:-len(".lora_A.default")]].lora_A = module.weight
-+            lora_weights[name[:-len(".lora_A.default")]].lora_A = _snapshot_lora_weight(module.weight)
-             lora_A_count += 1
+@@ -737,14 +776,14 @@
              expand_module_keys(name, module, remove_keys)
+             if adapter != _get_active_adapter(inner_model.get_submodule(key)): continue
+             if kind == "lora_A":
+-                lora_weights[key].lora_A = module.weight
++                lora_weights[key].lora_A = _snapshot_lora_weight(module.weight)
+                 lora_A_count += 1
+             elif kind == "lora_B":
+-                lora_weights[key].lora_B = module.weight
++                lora_weights[key].lora_B = _snapshot_lora_weight(module.weight)
+                 lora_weights[key].lora_B_bias = module.bias
+                 lora_B_count += 1
+             else:
+-                lora_weights[key].magnitude = module.weight
++                lora_weights[key].magnitude = _snapshot_lora_weight(module.weight)
  
-         elif name.endswith(".lora_B.default"):
--            lora_weights[name[:-len(".lora_B.default")]].lora_B = module.weight
-+            lora_weights[name[:-len(".lora_B.default")]].lora_B = _snapshot_lora_weight(module.weight)
-             lora_B_count += 1
-             expand_module_keys(name, module, remove_keys)
- 
-         elif name.endswith(".lora_magnitude_vector.default"):
-             # DoRA magnitude vector m; folded onto the merged weight in _merge_lora. Register its
-             # key so the key-consistency check does not flag it (the merged model omits it).
--            lora_weights[name[:-len(".lora_magnitude_vector.default")]].magnitude = module.weight
-+            lora_weights[name[:-len(".lora_magnitude_vector.default")]].magnitude = _snapshot_lora_weight(module.weight)
-             expand_module_keys(name, module, remove_keys)
- 
-         elif isinstance(module, Linear_LoRA_Layers):
+         elif name.endswith((".lora_embedding_A", ".lora_embedding_B")):
+             # PEFT Embedding delta (B_e @ A_e).T == Linear form with lora_B = A_e.T, lora_A = B_e.T.
