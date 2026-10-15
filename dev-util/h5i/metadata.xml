@@ -15,7 +15,7 @@
 		Five confinement tiers, strongest last: workspace (a separate git
 		worktree, no confinement), process (Landlock filesystem allowlist,
 		seccomp deny-list, namespaces, rlimits), supervised (adds a private
-		network namespace with an nftables egress allowlist and DNS pinning),
+		network namespace via slirp4netns with an egress allowlist and DNS pinning),
 		container (rootless Podman, read-only rootfs, dropped capabilities)
 		and microvm (a hardware-isolated guest with its own kernel).
 
@@ -25,9 +25,14 @@
 	</longdescription>
 	<use>
 		<flag name="web">
-			Build the <pkg>dev-util/h5i</pkg> box console (<code>h5i ui</code>):
+			Build the <pkg>dev-util/h5i</pkg> box console (h5i ui):
 			an axum server plus a React bundle embedded into the binary. Needs
 			a Node toolchain at build time.
+		</flag>
+		<flag name="browser">
+			Link the embedded rendering engine (h5i browser, its capture proxy,
+			browser identities and the yt-dlp transcript helper). Not needed
+			for the sandbox tiers.
 		</flag>
 		<flag name="containers">
 			Pull in <pkg>app-containers/podman</pkg> for the rootless
