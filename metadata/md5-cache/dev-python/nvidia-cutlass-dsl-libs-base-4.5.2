@@ -1,0 +1,17 @@
+BDEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DEFINED_PHASES=compile configure install prepare test unpack
+DEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DESCRIPTION=NVIDIA CUTLASS Python DSL — base shared libs
+EAPI=8
+HOMEPAGE=https://github.com/NVIDIA/cutlass https://pypi.org/project/nvidia-cutlass-dsl-libs-base/
+INHERIT=distutils-r1
+IUSE=python_targets_python3_12 python_targets_python3_13 python_targets_python3_14
+KEYWORDS=-* ~amd64
+LICENSE=NVIDIA-CUDA
+RDEPEND=dev-python/cuda-python[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] dev-python/numpy[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] dev-python/typing-extensions[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+REQUIRED_USE=|| ( python_targets_python3_12 python_targets_python3_13 python_targets_python3_14 )
+RESTRICT=bindist mirror
+SLOT=0
+SRC_URI=python_targets_python3_12? ( https://files.pythonhosted.org/packages/97/68/c1247ab848f26c4ab56e562eea0e3f31fc14c9aaf0d883afaa92d8f05592/nvidia_cutlass_dsl_libs_base-4.5.2-cp312-cp312-manylinux_2_28_x86_64.whl ) python_targets_python3_13? ( https://files.pythonhosted.org/packages/0a/6e/bfe256ac08e5a6dfb11444809e54c76c3a2f05fff38dd173e2e71b95e4d2/nvidia_cutlass_dsl_libs_base-4.5.2-cp313-cp313-manylinux_2_28_x86_64.whl ) python_targets_python3_14? ( https://files.pythonhosted.org/packages/3e/bc/5f9dd8c05c3e2f435228224f0b0e76e324c1bf0a6dcd3cfb917b5e94bad7/nvidia_cutlass_dsl_libs_base-4.5.2-cp314-cp314-manylinux_2_28_x86_64.whl )
+_eclasses_=distutils-r1	7d8b6aa7c8fa4a1ee59367f20cfb3c75	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	flag-o-matic	fd3558f73f6503093adee69adf41020d	multibuild	83db098a835f71feb71761f72a694aa2	multilib	fc812e8eb2170022c28272d80a1f9e77	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	out-of-source-utils	8e5093bd27b7f541a1913271f25d633a	python-r1	5fdca77e34fc9af7d6eb47689f33f6bf	python-utils-r1	025367880f07ae6444e6035a49db0dab	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=9c61e189bbe8fb5859b577d03f259a55

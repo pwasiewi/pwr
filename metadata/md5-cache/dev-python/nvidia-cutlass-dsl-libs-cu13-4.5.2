@@ -1,0 +1,17 @@
+BDEPEND=python_targets_python3_12? ( dev-python/installer[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] ) python_targets_python3_13? ( dev-python/installer[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] ) python_targets_python3_14? ( dev-python/installer[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] ) python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DEFINED_PHASES=compile configure install prepare test unpack
+DEPEND=python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+DESCRIPTION=NVIDIA CUTLASS Python DSL — CUDA-13-specific shared libs
+EAPI=8
+HOMEPAGE=https://github.com/NVIDIA/cutlass https://pypi.org/project/nvidia-cutlass-dsl-libs-cu13/
+INHERIT=distutils-r1
+IUSE=python_targets_python3_12 python_targets_python3_13 python_targets_python3_14 debug
+KEYWORDS=-* ~amd64
+LICENSE=NVIDIA-CUTLASS
+RDEPEND=~dev-python/nvidia-cutlass-dsl-libs-base-4.5.2[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] >=dev-python/cuda-python-12.8[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] dev-python/numpy[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] dev-python/typing-extensions[python_targets_python3_12(-)?,python_targets_python3_13(-)?,python_targets_python3_14(-)?] python_targets_python3_12? ( dev-lang/python:3.12 ) python_targets_python3_13? ( dev-lang/python:3.13 ) python_targets_python3_14? ( dev-lang/python:3.14 )
+REQUIRED_USE=|| ( python_targets_python3_12 python_targets_python3_13 python_targets_python3_14 )
+RESTRICT=bindist mirror strip
+SLOT=0
+SRC_URI=python_targets_python3_12? ( https://files.pythonhosted.org/packages/03/60/443e559139da15ab544761ac14f4206dffb981af48cc9856cd5b5b7cf0e7/nvidia_cutlass_dsl_libs_cu13-4.5.2-cp312-cp312-manylinux_2_28_x86_64.whl ) python_targets_python3_13? ( https://files.pythonhosted.org/packages/5c/9f/b7928ff505e577c1021c07b206ce32d285aae793763d524023c1800b6dc9/nvidia_cutlass_dsl_libs_cu13-4.5.2-cp313-cp313-manylinux_2_28_x86_64.whl ) python_targets_python3_14? ( https://files.pythonhosted.org/packages/aa/83/d335575e1d37f6c436b1e3203ded6f352678937b9f30b900b643f9df0f9d/nvidia_cutlass_dsl_libs_cu13-4.5.2-cp314-cp314-manylinux_2_28_x86_64.whl )
+_eclasses_=distutils-r1	7d8b6aa7c8fa4a1ee59367f20cfb3c75	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	flag-o-matic	fd3558f73f6503093adee69adf41020d	multibuild	83db098a835f71feb71761f72a694aa2	multilib	fc812e8eb2170022c28272d80a1f9e77	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	out-of-source-utils	8e5093bd27b7f541a1913271f25d633a	python-r1	5fdca77e34fc9af7d6eb47689f33f6bf	python-utils-r1	025367880f07ae6444e6035a49db0dab	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=ee9f57932d8a9d85e8f27798ff278c31
