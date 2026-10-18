@@ -134,7 +134,7 @@ RDEPEND="
 		>=sci-ml/torchaudio-2.11.0
 		>=sci-ml/torchvision-0.26.0[${PYTHON_SINGLE_USEDEP}]
 		~dev-python/flashinfer-python-0.6.17[${PYTHON_SINGLE_USEDEP}]
-		~dev-python/tilelang-0.1.9[${PYTHON_SINGLE_USEDEP}]
+		~dev-python/tilelang-0.1.12[${PYTHON_SINGLE_USEDEP}]
 		>=dev-python/quack-kernels-0.3.3[${PYTHON_SINGLE_USEDEP}]
 		humming? ( ~dev-python/humming-kernels-0.1.4[${PYTHON_SINGLE_USEDEP}] )
 		$(python_gen_cond_dep '
