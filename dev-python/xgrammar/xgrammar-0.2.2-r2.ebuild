@@ -25,7 +25,8 @@ IUSE="cuda"
 # Packaged-library lookup needs apache-tvm-ffi's extra_lib_paths API from 0.1.11.
 # CUDA JIT needs GCC 16 at runtime; keep its slot synchronized with the patch's
 # /usr/bin fallback when CUDA raises its compiler ceiling. (::pwr copy of ::stuff
-# 0.2.2, 2026-10-19: gcc 15 -> 16, accepted by nvcc since CUDA 13.4.3.)
+# 0.2.2, 2026-10-19: gcc 15 -> 16, accepted by nvcc since CUDA 13.4.3;
+# -r2: nvcc -std=c++17 -> c++20, torch 2.15 headers require C++20.)
 # Gate Triton by amd64, not USE=cuda: ROCm tensors also report device.type
 # "cuda", and the virtual supplies both backends. # verified 2026-09-09
 RDEPEND="
@@ -57,7 +58,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}/${PN}-respect-toolchain-flags.patch"
 	"${FILESDIR}/${PN}-0.2.3-load-binding-from-package.patch"
-	"${FILESDIR}/${PN}-0.2.2-r1-cuda-host-compiler.patch"
+	"${FILESDIR}/${PN}-0.2.2-r2-cuda-host-compiler.patch"
 )
 
 EPYTEST_PLUGINS=()
