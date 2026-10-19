@@ -1,0 +1,7 @@
+# Copy of ::kde's 'kde-baseapps-26.08' set, taken 2026-10-19 (26.04 -> 26.08: only kdeutils gains app-crypt/keepsecret).
+# Bump together with the KDE Gear version in the xp profiles that use it.
+<kde-apps/kdialog-26.08.50
+<kde-apps/keditbookmarks-26.08.50
+<kde-apps/kfind-26.08.50
+<kde-apps/konqueror-26.08.50
+<www-client/falkon-26.08.50
