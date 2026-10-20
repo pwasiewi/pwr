@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wąsiewicz</name>
+	</maintainer>
+	<use>
+		<flag name="cuda">Build the GPU wheel (tensorflow) against the system CUDA toolkit and cuDNN, for sm_120; without it the CPU wheel (tensorflow_cpu) is built</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">tensorflow/tensorflow</remote-id>
+		<remote-id type="pypi">tensorflow</remote-id>
+	</upstream>
+</pkgmetadata>
