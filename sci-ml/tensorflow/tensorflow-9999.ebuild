@@ -127,7 +127,10 @@ src_configure() {
 	# Gentoo bug 916752). The AVX3 targets are disabled below; this host (znver3) has no AVX-512 anyway.
 	# The pinned BoringSSL builds with -Werror and predates glibc 2.44's const-generic memchr (__glibc_const_generic):
 	# internal.h "returning 'const void *' from a function with result type 'void *' discards qualifiers".
-	# One C-only diagnostic is downgraded for BoringSSL's .c files (a C++ compile would reject the option name).
+	# Both fixes go into the auto-configured toolchain (BAZEL_CXXOPTS / BAZEL_CONLYOPTS, colon-separated), not
+	# into --copt/--host_copt: Bazel 7.7 did not carry --host_copt into the exec configuration, so tools such
+	# as @xla//xla:packing [for tool] were still compiled without the define (attempt 6). CONLYOPTS reaches
+	# C files only, so the C-only -Wno-error group never meets a C++ compile (which would reject the name).
 	# Host CFLAGS (-march/-mtune) go to Bazel as copts; -pipe/-O*/hardening flags are Bazel's business.
 	# Every bazelrc line needs a command word: a bare "--copt=..." is "invalid command name" (attempt 2, 2026-10-21).
 	local cflag copts=
@@ -159,10 +162,9 @@ src_configure() {
 		common --verbose_failures
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
+		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
+		common --repo_env=BAZEL_CONLYOPTS=-Wno-error=incompatible-pointer-types-discards-qualifiers
 		${copts}
-		build --copt=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
-		build --host_copt=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
-		build --per_file_copt=external/boringssl/.*\.c\$@-Wno-error=incompatible-pointer-types-discards-qualifiers
 	EOF
 
 	if use cuda; then
