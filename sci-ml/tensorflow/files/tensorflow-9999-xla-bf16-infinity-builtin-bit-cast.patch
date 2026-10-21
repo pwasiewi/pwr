@@ -1,0 +1,25 @@
+clang 22 + libstdc++ 16: a __device__ constexpr variable initialised through the constexpr but unannotated
+absl::bit_cast instantiates std::is_trivially_copyable in a device constant-evaluation context, where
+libstdc++ 16's host-only __and_fn is "not viable":
+  type_traits:207: error: no matching function for call to '__and_fn'
+  type_traits:976: error: no matching function for call to '__is_complete_or_unbounded'
+__builtin_bit_cast performs the same check inside the compiler and needs no std trait. Reproduced and
+verified with clang++ -x cuda on 2026-10-21 (sci-ml/tensorflow-9999::pwr); XLA main still has the old lines.
+--- a/third_party/xla/xla/stream_executor/cuda/buffer_debug_float_check_kernel_cuda.cu.cc	2026-10-21 12:27:38.626133388 +0200
++++ b/third_party/xla/xla/stream_executor/cuda/buffer_debug_float_check_kernel_cuda.cu.cc	2026-10-21 12:27:38.628133404 +0200
+@@ -46,13 +46,13 @@
+ // So we can get a constant this way.
+ template <>
+ __device__ constexpr __nv_bfloat16 kInfinity<__nv_bfloat16> =
+-    absl::bit_cast<__nv_bfloat16>(kInfinity<Eigen::bfloat16>);
++    __builtin_bit_cast(__nv_bfloat16, kInfinity<Eigen::bfloat16>);
+ // - __half lacks std::numeric_limits specialization, and Eigen::half is not a
+ // literal type (non-constexpr constructors), so we construct infinity from raw
+ // bits.
+ template <>
+ __device__ constexpr __half kInfinity<__half> =
+-    absl::bit_cast<__half>(uint16_t{0x7C00});
++    __builtin_bit_cast(__half, uint16_t{0x7C00});
+ 
+ template <>
+ __device__ inline bool IsNan(__nv_bfloat16 v) {

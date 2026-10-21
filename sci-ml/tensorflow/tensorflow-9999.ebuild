@@ -101,6 +101,16 @@ BDEPEND="
 
 TF_BAZEL_CACHE="${TF_BAZEL_CACHE:-/var/cache/bazel-tf}"
 
+# clang 22 + libstdc++ 16: XLA's __device__ constexpr bf16/half infinity constants go through the constexpr but
+# unannotated absl::bit_cast, which instantiates std::is_trivially_copyable in a device constant-evaluation
+# context where libstdc++ 16's host-only __and_fn is "not viable" (GPU attempt 6). __builtin_bit_cast does
+# the same check inside the compiler. Reproduced and verified with clang++ -x cuda; XLA main is unchanged.
+PATCHES=( "${FILESDIR}/${P}-xla-bf16-infinity-builtin-bit-cast.patch" )
+
+src_prepare() {
+	default   # applies PATCHES to the live checkout
+}
+
 pkg_pretend() {
 	CHECKREQS_MEMORY="24G"
 	CHECKREQS_DISK_BUILD="40G"
