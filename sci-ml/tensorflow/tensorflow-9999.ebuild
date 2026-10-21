@@ -121,10 +121,13 @@ src_configure() {
 	local clang_bin=/usr/lib/llvm/22/bin
 	[[ -x ${clang_bin}/clang ]] || die "clang 22 not found in ${clang_bin}"
 
-	# highway 1.4.0 (XLA's pin) cannot compile its AVX-512 code paths with clang 22: the intrinsics'
-	# always_inline target attribute no longer matches the pragma-pushed functions ("_mm512_set1_epi8
-	# requires target feature 'avx512f', but would be inlined into function 'Set'"; google/highway#2705,
-	# Gentoo bug 916752). The AVX3 targets are disabled below; this host (znver3) has no AVX-512 anyway.
+	# highway cannot compile its 512-bit code paths with clang 22: the intrinsics' always_inline target
+	# attribute no longer matches the pragma-pushed functions ("_mm512_set1_epi8 requires target feature
+	# 'avx512f', but would be inlined into function 'Set'"; google/highway#2705, Gentoo bug 916752). The
+	# effective copy is TF's own com_google_highway() = 1.3.0 (registered as @highway BEFORE XLA's 1.4.0 pin),
+	# which still treats AVX10.2 as attainable on clang 22, so that target must be masked too (attempt 7).
+	# Every 512-bit target is disabled below; this host (znver3) has no AVX-512 anyway. Reproduced and
+	# verified locally with `clang++ -c` (codegen; -fsyntax-only never shows these errors).
 	# The pinned BoringSSL builds with -Werror and predates glibc 2.44's const-generic memchr (__glibc_const_generic):
 	# internal.h "returning 'const void *' from a function with result type 'void *' discards qualifiers".
 	# Both fixes go into the auto-configured toolchain (BAZEL_CXXOPTS / BAZEL_CONLYOPTS, colon-separated), not
@@ -162,7 +165,7 @@ src_configure() {
 		common --verbose_failures
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
-		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
+		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2)
 		common --repo_env=BAZEL_CONLYOPTS=-Wno-error=incompatible-pointer-types-discards-qualifiers
 		${copts}
 	EOF
