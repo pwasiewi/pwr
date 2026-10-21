@@ -130,10 +130,13 @@ src_configure() {
 	# verified locally with `clang++ -c` (codegen; -fsyntax-only never shows these errors).
 	# The pinned BoringSSL builds with -Werror and predates glibc 2.44's const-generic memchr (__glibc_const_generic):
 	# internal.h "returning 'const void *' from a function with result type 'void *' discards qualifiers".
-	# -includecstdint (joined form, one colon-separated token): the pinned tf_runtime and friends use int64_t
-	# without including <cstdint>; GCC 16's libstdc++ (clang 22's default stdlib here) no longer provides it
-	# transitively ("forward_decls.h:110: unknown type name 'int64_t'", attempt 8). Setting BAZEL_CXXOPTS also
-	# drops its default -std=c++14, which is fine: TF's own bazelrc passes -std=c++17 on every compile.
+	# -includecstdint: the pinned tf_runtime and friends use int64_t without including <cstdint>; GCC 16's
+	# libstdc++ (clang 22's default stdlib here) no longer provides it transitively ("forward_decls.h:110:
+	# unknown type name 'int64_t'", attempt 8). It must NOT go into BAZEL_CXXOPTS: cc_configure runs several
+	# `clang -E -x c++ - -v` include-directory probes with those flags, one of them cannot resolve <cstdint>,
+	# and its "fatal error" stderr was pasted into local_config_cc/BUILD as include directories, which broke
+	# the Starlark syntax (attempt 9). So it is a --cxxopt/--host_cxxopt pair (target + exec configuration).
+	# Setting BAZEL_CXXOPTS drops its default -std=c++14, which is fine: TF passes -std=c++17 itself.
 	# Both fixes go into the auto-configured toolchain (BAZEL_CXXOPTS / BAZEL_CONLYOPTS, colon-separated), not
 	# into --copt/--host_copt: Bazel 7.7 did not carry --host_copt into the exec configuration, so tools such
 	# as @xla//xla:packing [for tool] were still compiled without the define (attempt 6). CONLYOPTS reaches
@@ -169,7 +172,9 @@ src_configure() {
 		common --verbose_failures
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
-		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2):-includecstdint
+		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2)
+		build --cxxopt=-includecstdint
+		build --host_cxxopt=-includecstdint
 		common --repo_env=BAZEL_CONLYOPTS=-Wno-error=incompatible-pointer-types-discards-qualifiers
 		${copts}
 	EOF
