@@ -119,6 +119,12 @@ pkg_setup() {
 
 src_configure() {
 	local clang_bin=/usr/lib/llvm/22/bin
+	# Force-included headers must live under a toolchain "builtin include directory", or Bazel's absolute
+	# path inclusion check fails every compile that pulls them in (GPU attempt 5). The autoconfiguration
+	# derives that list from a `clang -E -v` probe run with BAZEL_CXXOPTS, so -isystem${T}/cuda-shim there
+	# registers the directory (${T} is a stable path across emerges). A -isystem cannot break the probes
+	# the way -include did. Cost: toolchain flags are part of every action key, so the disk cache misses once.
+	mkdir -p "${T}/cuda-shim" || die
 	[[ -x ${clang_bin}/clang ]] || die "clang 22 not found in ${clang_bin}"
 
 	# highway cannot compile its 512-bit code paths with clang 22: the intrinsics' always_inline target
@@ -174,7 +180,7 @@ src_configure() {
 		common --verbose_failures
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
-		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2)
+		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2):-isystem${T}/cuda-shim
 		build --cxxopt=-includecstdint
 		build --host_cxxopt=-includecstdint
 		build --cxxopt=-isystem/usr/include/jsoncpp
@@ -184,13 +190,60 @@ src_configure() {
 	EOF
 
 	if use cuda; then
+		# rules_ml_toolchain reads LOCAL_CUDA_PATH / LOCAL_CUDNN_PATH as unpacked redistributions: it symlinks
+		# the subdirectories include/ bin/ lib/ nvvm/ and fails on the first missing one ("/opt/cuda/lib
+		# directory doesn't exist!", attempt 11). Gentoo's toolkit has lib64 -> targets/x86_64-linux/lib and no
+		# lib, and dev-libs/cudnn lives inside the same tree, so stage a symlink farm with the expected names.
+		# The driver stub (libcuda) and NCCL are not installed here and stay hermetic (downloaded).
+		# override_include_cuda_libs: --config=cuda links the CUDA libraries into TF's shared objects
+		# (include_cuda_libs=true) and the wheel rule then refuses to package unless told so; the alternative
+		# --config=cuda_wheel is the PyPI model (nvidia-* pip wheels at runtime), wrong for a system toolkit.
+		# TF's own CI uses the same override for its local-library CUDA 13 wheel test (.bazelrc).
+		# Every local redist (cudart, cupti, nvcc, nvml, ...) draws from the SAME root, so include/ and lib/ are
+		# merged directories: Gentoo keeps CUPTI apart in extras/CUPTI/{include,lib64} ("cupti_result.h file
+		# not found", GPU attempt 3), while an unpacked redistribution has it in the top-level include/ and lib/.
+		local cuda_local=${T}/cuda-local cuda_root=${EPREFIX}/opt/cuda entry src
+		mkdir -p "${cuda_local}"/{include,lib} || die
+		for entry in "${cuda_root}"/*; do
+			case ${entry##*/} in
+				include|lib|lib64) ;;
+				*) ln -sfn "${entry}" "${cuda_local}/${entry##*/}" || die ;;
+			esac
+		done
+		for src in "${cuda_root}"/include "${cuda_root}"/extras/CUPTI/include; do
+			for entry in "${src}"/*; do [[ -e ${entry} ]] && { ln -sfn "${entry}" "${cuda_local}/include/${entry##*/}" || die; }; done
+		done
+		for src in "${cuda_root}"/lib64 "${cuda_root}"/extras/CUPTI/lib64; do
+			for entry in "${src}"/*; do [[ -e ${entry} ]] && { ln -sfn "${entry}" "${cuda_local}/lib/${entry##*/}" || die; }; done
+		done
+		for entry in include bin lib nvvm; do
+			[[ -d ${cuda_local}/${entry}/ ]] || die "${EPREFIX}/opt/cuda has no ${entry}/ (needed as ${cuda_local}/${entry})"
+		done
+		[[ -e ${cuda_local}/include/cudnn.h ]] || die "cudnn.h not under ${cuda_root}/include (dev-libs/cudnn)"
+		[[ -e ${cuda_local}/include/cupti_result.h && -e ${cuda_local}/lib/libcupti.so ]] || die "CUPTI not under ${cuda_root}/extras/CUPTI"
+		# clang 22 replaces the toolkit's sm_32_intrinsics.hpp with its own __clang_cuda_intrinsics.h, whose
+		# cache-hint loads __ldcg/__ldcs/__ldcv have `long` overloads but no `unsigned long` twins (uint64_t on
+		# LP64): XLA's RAFT top-k fails with "no matching function for call to '__ldcs'" (GPU attempt 4). The
+		# toolkit header has them but is never consulted. Force-included shim; a no-op outside CUDA compiles.
+		cat > "${T}/cuda-shim/cuda-ul-shim.h" <<-'EOF' || die
+			#if defined(__clang__) && defined(__CUDA__) && defined(__SM_32_INTRINSICS_HPP__)
+			#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 320
+			inline __device__ unsigned long __ldcg(const unsigned long *__p) { return (unsigned long)__ldcg((const long *)__p); }
+			inline __device__ unsigned long __ldcv(const unsigned long *__p) { return (unsigned long)__ldcv((const long *)__p); }
+			inline __device__ unsigned long __ldcs(const unsigned long *__p) { return (unsigned long)__ldcs((const long *)__p); }
+			#endif
+			#endif
+		EOF
 		cat >> "${T}/gentoo.bazelrc" <<-EOF || die
+			build --cxxopt=-include${T}/cuda-shim/cuda-ul-shim.h
+			build --host_cxxopt=-include${T}/cuda-shim/cuda-ul-shim.h
 			common --config=cuda_clang
 			common --config=cuda13_version
 			common --repo_env=HERMETIC_CUDA_COMPUTE_CAPABILITIES=sm_120,compute_120
-			common --repo_env=LOCAL_CUDA_PATH=${EPREFIX}/opt/cuda
-			common --repo_env=LOCAL_CUDNN_PATH=${EPREFIX}/opt/cuda
+			common --repo_env=LOCAL_CUDA_PATH=${cuda_local}
+			common --repo_env=LOCAL_CUDNN_PATH=${cuda_local}
 			common --repo_env=TF_CUDA_CLANG=1
+			common --@local_config_cuda//cuda:override_include_cuda_libs=true
 		EOF
 	fi
 	einfo "Bazel settings (${T}/gentoo.bazelrc):"
