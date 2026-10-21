@@ -12,9 +12,9 @@ EAPI=8
 #  - C/C++ compiler: the system clang 22 (`--config=clang_local`, hermetic CC toolchain OFF).
 #  - CUDA (USE=cuda): the system toolkit in /opt/cuda (13.x) and cuDNN, via LOCAL_CUDA_PATH /
 #    LOCAL_CUDNN_PATH; compiled for sm_120 + compute_120 only. NCCL stays hermetic (not installed here).
-#  - Libraries: TF_SYSTEM_LIBS for the version-tolerant ones (zlib, png, gif, jpeg, snappy, sqlite,
-#    curl, jsoncpp, nasm, pybind11 and the pure-Python archives). protobuf, grpc, abseil, re2 and
-#    boringssl stay bundled: TF pins them tightly and a system mix is the classic failure.
+#  - Libraries: TF_SYSTEM_LIBS for the version-tolerant C ones (zlib, png, gif, jpeg, snappy, sqlite,
+#    curl, jsoncpp). protobuf, grpc, abseil, re2, boringssl, pybind11, flatbuffers and the Python
+#    archives stay bundled: TF pins them tightly, and the Python ones no longer support a system copy.
 #  - Python: Bazel's hermetic interpreter pinned to the system minor (3.14) so the wheel is cp314;
 #    the wheel is installed into the system site-packages and runs on system numpy/protobuf/h5py.
 #
@@ -39,10 +39,12 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RESTRICT="network-sandbox strip test cuda? ( bindist )"
 PROPERTIES="live"
 
+# Only archives whose tf_http_archive still declares a system_build_file (master, 2026-10-21): the Python
+# packages (absl_py, six, wrapt, ...) lost theirs although syslibs_configure.bzl still lists them, and naming
+# one makes the repository rule create nothing ("_tf_http_archive rule //external:absl_py must create a
+# directory"). pybind11, re2, grpc, boringssl, protobuf, flatbuffers stay bundled: TF pins their versions.
 TF_SYSLIBS=(
-	absl_py astor_archive astunparse_archive cython dill_archive flatbuffers functools32_archive
-	gast_archive gif jsoncpp_git libjpeg_turbo nasm org_sqlite pasta png pybind11 six_archive snappy
-	tblib_archive termcolor_archive typing_extensions_archive wrapt zlib curl
+	curl gif jsoncpp_git libjpeg_turbo org_sqlite png snappy zlib
 )
 
 COMMON_DEPEND="
@@ -119,10 +121,11 @@ src_configure() {
 	[[ -x ${clang_bin}/clang ]] || die "clang 22 not found in ${clang_bin}"
 
 	# Host CFLAGS (-march/-mtune) go to Bazel as copts; -pipe/-O*/hardening flags are Bazel's business.
-	local cflag copts=()
+	# Every bazelrc line needs a command word: a bare "--copt=..." is "invalid command name" (attempt 2, 2026-10-21).
+	local cflag copts=
 	for cflag in ${CFLAGS}; do
 		case ${cflag} in
-			-march=*|-mtune=*|-mno-*|-mavx*|-mfma) copts+=( "--copt=${cflag}" "--host_copt=${cflag}" ) ;;
+			-march=*|-mtune=*|-mno-*|-mavx*|-mfma) copts+="build --copt=${cflag}"$'\n'"build --host_copt=${cflag}"$'\n' ;;
 		esac
 	done
 
@@ -148,7 +151,7 @@ src_configure() {
 		common --verbose_failures
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
-		${copts[*]}
+		${copts}
 	EOF
 
 	if use cuda; then
