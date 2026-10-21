@@ -137,6 +137,8 @@ src_configure() {
 	# and its "fatal error" stderr was pasted into local_config_cc/BUILD as include directories, which broke
 	# the Starlark syntax (attempt 9). So it is a --cxxopt/--host_cxxopt pair (target + exec configuration).
 	# Setting BAZEL_CXXOPTS drops its default -std=c++14, which is fine: TF passes -std=c++17 itself.
+	# -isystem/usr/include/jsoncpp: systemlibs/jsoncpp.BUILD only adds -ljsoncpp and expects "json/json.h" on the
+	# default include path; Gentoo installs dev-libs/jsoncpp headers under /usr/include/jsoncpp/ (attempt 10).
 	# Both fixes go into the auto-configured toolchain (BAZEL_CXXOPTS / BAZEL_CONLYOPTS, colon-separated), not
 	# into --copt/--host_copt: Bazel 7.7 did not carry --host_copt into the exec configuration, so tools such
 	# as @xla//xla:packing [for tool] were still compiled without the define (attempt 6). CONLYOPTS reaches
@@ -175,6 +177,8 @@ src_configure() {
 		common --repo_env=BAZEL_CXXOPTS=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR|HWY_AVX10_2)
 		build --cxxopt=-includecstdint
 		build --host_cxxopt=-includecstdint
+		build --cxxopt=-isystem/usr/include/jsoncpp
+		build --host_cxxopt=-isystem/usr/include/jsoncpp
 		common --repo_env=BAZEL_CONLYOPTS=-Wno-error=incompatible-pointer-types-discards-qualifiers
 		${copts}
 	EOF
