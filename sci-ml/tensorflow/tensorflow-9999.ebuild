@@ -209,6 +209,10 @@ src_configure() {
 		# (include_cuda_libs=true) and the wheel rule then refuses to package unless told so; the alternative
 		# --config=cuda_wheel is the PyPI model (nvidia-* pip wheels at runtime), wrong for a system toolkit.
 		# TF's own CI uses the same override for its local-library CUDA 13 wheel test (.bazelrc).
+		# nonccl (--define=no_nccl_support=true): NCCL is multi-GPU collective machinery with no Gentoo package;
+		# the build otherwise takes it hermetically and the installed libraries then carry a DT_NEEDED on
+		# libnccl.so.2 that nothing on the host provides ("ImportError: libnccl.so.2", GPU attempt 8). For a
+		# multi-GPU host: package dev-libs/nccl from source, RDEPEND it, set LOCAL_NCCL_PATH, drop this line.
 		# Every local redist (cudart, cupti, nvcc, nvml, ...) draws from the SAME root, so include/ and lib/ are
 		# merged directories: Gentoo keeps CUPTI apart in extras/CUPTI/{include,lib64} ("cupti_result.h file
 		# not found", GPU attempt 3), while an unpacked redistribution has it in the top-level include/ and lib/.
@@ -254,6 +258,7 @@ src_configure() {
 			common --repo_env=LOCAL_CUDNN_PATH=${cuda_local}
 			common --repo_env=TF_CUDA_CLANG=1
 			common --@local_config_cuda//cuda:override_include_cuda_libs=true
+			common --config=nonccl
 		EOF
 	fi
 	einfo "Bazel settings (${T}/gentoo.bazelrc):"
@@ -276,9 +281,13 @@ src_compile() {
 }
 
 src_install() {
-	local whl
-	whl=$(find -L bazel-bin/tensorflow/tools/pip_package/wheel_house -name '*.whl' -print -quit) || die
-	[[ -n ${whl} ]] || die "no wheel under bazel-bin/tensorflow/tools/pip_package/wheel_house"
+	# wheel_house lives in the persistent output tree, so it holds every wheel built so far: pick by name
+	# ("tensorflow-*" cannot match "tensorflow_cpu-*"). A bare '*.whl -print -quit' installed the stale
+	# CPU wheel after a successful USE=cuda build (GPU attempt 7: import test saw is_cuda_build False).
+	local whl wheel_name=tensorflow_cpu
+	use cuda && wheel_name=tensorflow
+	whl=$(find -L bazel-bin/tensorflow/tools/pip_package/wheel_house -name "${wheel_name}-*.whl" -print -quit) || die
+	[[ -n ${whl} ]] || die "no ${wheel_name}-*.whl under bazel-bin/tensorflow/tools/pip_package/wheel_house"
 	einfo "installing ${whl##*/}"
 	${EPYTHON} -m installer --destdir="${D}" "${whl}" || die
 	python_optimize
