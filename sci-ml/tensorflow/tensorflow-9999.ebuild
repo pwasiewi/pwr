@@ -121,6 +121,10 @@ src_configure() {
 	local clang_bin=/usr/lib/llvm/22/bin
 	[[ -x ${clang_bin}/clang ]] || die "clang 22 not found in ${clang_bin}"
 
+	# highway 1.4.0 (XLA's pin) cannot compile its AVX-512 code paths with clang 22: the intrinsics'
+	# always_inline target attribute no longer matches the pragma-pushed functions ("_mm512_set1_epi8
+	# requires target feature 'avx512f', but would be inlined into function 'Set'"; google/highway#2705,
+	# Gentoo bug 916752). The AVX3 targets are disabled below; this host (znver3) has no AVX-512 anyway.
 	# Host CFLAGS (-march/-mtune) go to Bazel as copts; -pipe/-O*/hardening flags are Bazel's business.
 	# Every bazelrc line needs a command word: a bare "--copt=..." is "invalid command name" (attempt 2, 2026-10-21).
 	local cflag copts=
@@ -153,6 +157,8 @@ src_configure() {
 		common --color=no --curses=no --show_progress_rate_limit=60
 		common --noshow_loading_progress
 		${copts}
+		build --copt=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
+		build --host_copt=-DHWY_DISABLED_TARGETS=(HWY_AVX3|HWY_AVX3_DL|HWY_AVX3_ZEN4|HWY_AVX3_SPR)
 	EOF
 
 	if use cuda; then
