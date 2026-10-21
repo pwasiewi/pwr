@@ -166,6 +166,9 @@ src_configure() {
 }
 
 src_compile() {
+	# src_* phases run inside the Portage sandbox; the persistent Bazel state lives outside WORKDIR
+	# (2026-10-21: first attempt died on "ACCESS DENIED: mkdir .../output_user_root/<hash>")
+	addwrite "${TF_BAZEL_CACHE}"
 	export BAZELISK_HOME="${TF_BAZEL_CACHE}/bazelisk"
 	export HOME="${TF_BAZEL_CACHE}"
 	local wheel_name=tensorflow_cpu
