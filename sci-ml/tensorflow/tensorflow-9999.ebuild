@@ -12,8 +12,8 @@ EAPI=8
 #  - C/C++ compiler: the system clang 22 (`--config=clang_local`, hermetic CC toolchain OFF).
 #  - CUDA (USE=cuda): the system toolkit in /opt/cuda (13.x) and cuDNN, via LOCAL_CUDA_PATH /
 #    LOCAL_CUDNN_PATH; compiled for sm_120 + compute_120 only. NCCL stays hermetic (not installed here).
-#  - Libraries: TF_SYSTEM_LIBS for the version-tolerant C ones (zlib, png, gif, jpeg, snappy, sqlite,
-#    curl, jsoncpp). protobuf, grpc, abseil, re2, boringssl, pybind11, flatbuffers and the Python
+#  - Libraries: TF_SYSTEM_LIBS for the version-tolerant C ones (png, gif, jpeg, snappy, sqlite, curl,
+#    jsoncpp; zlib is wanted as zlib-ng by the vendored LLVM, so it stays bundled). protobuf, grpc, abseil, re2, boringssl, pybind11, flatbuffers and the Python
 #    archives stay bundled: TF pins them tightly, and the Python ones no longer support a system copy.
 #  - Python: Bazel's hermetic interpreter pinned to the system minor (3.14) so the wheel is cp314;
 #    the wheel is installed into the system site-packages and runs on system numpy/protobuf/h5py.
@@ -43,8 +43,10 @@ PROPERTIES="live"
 # packages (absl_py, six, wrapt, ...) lost theirs although syslibs_configure.bzl still lists them, and naming
 # one makes the repository rule create nothing ("_tf_http_archive rule //external:absl_py must create a
 # directory"). pybind11, re2, grpc, boringssl, protobuf, flatbuffers stay bundled: TF pins their versions.
+# zlib stays bundled too: the vendored llvm-project asks for @zlib//:zlib-ng, which systemlibs/zlib.BUILD
+# does not define (attempt 3, 2026-10-21). The seven below are consumed only by TF's own targets.
 TF_SYSLIBS=(
-	curl gif jsoncpp_git libjpeg_turbo org_sqlite png snappy zlib
+	curl gif jsoncpp_git libjpeg_turbo org_sqlite png snappy
 )
 
 COMMON_DEPEND="
@@ -55,7 +57,6 @@ COMMON_DEPEND="
 	media-libs/libjpeg-turbo:=
 	media-libs/libpng:=
 	net-misc/curl
-	virtual/zlib:=
 	cuda? (
 		dev-libs/cudnn
 		>=dev-util/nvidia-cuda-toolkit-13
