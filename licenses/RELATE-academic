@@ -1,0 +1,39 @@
+LICENCE TERMS FOR ACCESS TO SOFTWARE FOR ACADEMIC USE
+
+These licence terms apply to all licences granted by THE CHANCELLOR, MASTERS AND
+SCHOLARS OF THE UNIVERSITY OF OXFORD for use of RELATE, which estimates
+genome-wide genealogies for thousands of samples ("the Software"), through the
+website http://myersgroup.github.io/relate/.
+
+THIS WEBSITE AND THE SOFTWARE ARE INTENDED FOR ACADEMICS CARRYING OUT RESEARCH
+AND NOT FOR USE BY CONSUMERS OR COMMERCIAL BUSINESSES.
+
+Summary of the terms that matter for packaging (the authoritative text is the PDF
+20180411_15670_RELATE_Academic_Usage_Licence.pdf shipped in the upstream source
+tree and installed as part of this package's documentation):
+
+ 1. The user is granted a limited, non-exclusive, non-transferable, royalty-free
+    licence to access and use the Software provided that the user will:
+    (a) limit use to their own internal academic non-commercial research,
+        undertaken for the purposes of education or other scholarly use;
+    (b) not use the Software for or on behalf of any third party, nor to provide
+        a service, nor integrate all or part of the Software into a product for
+        sale or licence to third parties;
+    (c) use the Software in accordance with the instructions and guidance given
+        on the Website;
+    (d) comply with all applicable laws and regulations;
+    (e) except as expressly permitted, not attempt to reverse compile,
+        disassemble, copy, modify, duplicate, create derivative works from,
+        frame, MIRROR, REPUBLISH, download, display, transmit or DISTRIBUTE all
+        or any portion of the Software in any form or media or by any means; and
+    (f) ensure that the copyright notice "Copyright (c) 2018, University of
+        Oxford" appears prominently wherever results from the Software are used,
+        and cite it in any research publication or other material created using
+        the Software.
+ 2. The University reserves the right to revise, modify and replace the
+    functionality and performance of the Software at any time.
+ 3. The University owns all intellectual property rights in the Software.
+
+Because clause 1(e) forbids mirroring and redistribution, this package sets
+RESTRICT="mirror bindist" and the distfile must be fetched from upstream.
+Commercial use requires a separate licence from the University of Oxford.

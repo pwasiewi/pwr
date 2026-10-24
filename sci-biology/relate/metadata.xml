@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Relate estimates genome-wide genealogies (tree sequences) with recombination for
+    thousands of samples, and is the input stage for time-stratified f-statistics via
+    twigstats. Licensed for academic non-commercial use only.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">MyersGroup/relate</remote-id>
+  </upstream>
+</pkgmetadata>

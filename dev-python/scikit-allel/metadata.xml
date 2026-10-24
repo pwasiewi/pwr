@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    scikit-allel provides array-based data structures and statistics for genetic
+    variation data (VCF, Zarr, HDF5). Packaged here as the runtime dependency that
+    ancIBD uses to read VCFs into its HDF5 format. Installing dev-python/dask (from
+    the ::stuff overlay) additionally enables the dask-backed chunked array classes;
+    allel guards that import, so it is optional.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">cggh/scikit-allel</remote-id>
+    <remote-id type="pypi">scikit-allel</remote-id>
+  </upstream>
+</pkgmetadata>

@@ -1,0 +1,13 @@
+DEFINED_PHASES=install preinst prepare setup
+DEPEND=>=virtual/jdk-1.8:* >=dev-java/java-config-2.2.0-r3
+DESCRIPTION=Detection of identity-by-descent segments in phased genotype data
+EAPI=8
+HOMEPAGE=https://faculty.washington.edu/browning/refined-ibd.html
+INHERIT=java-pkg-2
+KEYWORDS=~amd64
+LICENSE=GPL-3+
+RDEPEND=>=virtual/jre-1.8:* >=dev-java/java-config-2.2.0-r3
+SLOT=0
+SRC_URI=https://faculty.washington.edu/browning/refined-ibd/refined-ibd.17Jan20.102.jar https://faculty.washington.edu/browning/refined-ibd/merge-ibd-segments.17Jan20.102.jar https://faculty.washington.edu/browning/refined-ibd/refined-ibd.04Dec18.pdf
+_eclasses_=java-utils-2	4fa0be92748bc228f31bd845d285d7f9	java-pkg-2	438c2725ea326202d7fc1eb31af76813
+_md5_=c3eb6b609582e1044807d766d0488213

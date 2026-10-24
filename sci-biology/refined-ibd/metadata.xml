@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Refined IBD detects identity-by-descent and homozygosity-by-descent segments in
+    phased genotype data, reporting segments from roughly 1 cM upwards. The companion
+    merge-ibd-segments tool joins segments separated by short gaps.
+  </longdescription>
+  <upstream>
+    <remote-id type="cpe">cpe:/a:browning:refined-ibd</remote-id>
+  </upstream>
+</pkgmetadata>

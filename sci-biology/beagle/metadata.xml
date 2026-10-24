@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    BEAGLE performs genotype phasing and imputation of ungenotyped markers. Version 5.x
+    also ships bref3, the binary reference-panel converter. Installs beagle.jar and
+    bref3.jar with wrapper launchers.
+  </longdescription>
+  <upstream>
+    <remote-id type="cpe">cpe:/a:browning:beagle</remote-id>
+  </upstream>
+</pkgmetadata>

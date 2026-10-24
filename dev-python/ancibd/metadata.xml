@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    ancIBD calls identity-by-descent segments between ancient genomes that have been
+    imputed to diploid genotypes (GLIMPSE against a 1000 Genomes panel). It is
+    calibrated for segments of 8 cM and longer on 1240K-density data.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">hringbauer/ancIBD</remote-id>
+    <remote-id type="pypi">ancIBD</remote-id>
+  </upstream>
+</pkgmetadata>

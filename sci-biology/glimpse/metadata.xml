@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    GLIMPSE2 imputes and phases low-coverage whole-genome sequencing data against a
+    reference panel. It installs the five GLIMPSE2 tools: chunk, split_reference,
+    phase, ligate and concordance, plus the bundled recombination maps.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">odelaneau/GLIMPSE</remote-id>
+  </upstream>
+</pkgmetadata>
