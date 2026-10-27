@@ -31,6 +31,10 @@ RDEPEND="${DEPEND}"
 # One self-contained subproject per binary, each with its own makefile.
 GLIMPSE_TOOLS=( chunk concordance ligate phase split_reference )
 
+# phase/ and split_reference/ symlink their containers/ sources into common/,
+# so these two files cover all four tools that read a genetic map.
+PATCHES=( "${FILESDIR}"/${P}-map-bounds.patch )
+
 src_prepare() {
 	default
 

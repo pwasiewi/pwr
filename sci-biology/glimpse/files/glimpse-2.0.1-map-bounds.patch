@@ -1,0 +1,27 @@
+Check the index bound before reading pos_bp[closest_pos]. With panel variants
+past the last genetic-map position the loop read one element past the end of
+pos_bp; _GLIBCXX_ASSERTIONS (hardened profile) aborts GLIMPSE2_chunk,
+_split_reference and _phase there, other builds read garbage silently.
+
+--- a/chunk/src/chunker/chunker_map.cpp	2023-04-24 15:46:59.000000000 +0200
++++ b/chunk/src/chunker/chunker_map.cpp	2026-10-27 06:13:14.240532776 +0100
+@@ -41,7 +41,7 @@
+ 		if (positions_cm[i_locus] == -1) {
+ 
+ 			//Find suitable long interpolation long interval
+-			while (positions_mb[i_locus] > pos_bp[closest_pos] && closest_pos < pos_bp.size()) closest_pos++;
++			while (closest_pos < pos_bp.size() && positions_mb[i_locus] > pos_bp[closest_pos]) closest_pos++;
+ 
+ 			//long interpolate
+ 			if (closest_pos < pos_bp.size()) {
+--- a/common/src/containers/variant_map.cpp	2023-04-24 15:46:59.000000000 +0200
++++ b/common/src/containers/variant_map.cpp	2026-10-27 06:13:14.247661554 +0100
+@@ -102,7 +102,7 @@
+ 		if (vec_pos[i_locus]->cm == -1) {
+ 
+ 			//Find suitable interpolation interval
+-			while (vec_pos[i_locus]->bp > pos_bp[closest_pos] && closest_pos < pos_bp.size()) closest_pos++;
++			while (closest_pos < pos_bp.size() && vec_pos[i_locus]->bp > pos_bp[closest_pos]) closest_pos++;
+ 
+ 			//Interpolate
+ 			if (closest_pos < pos_bp.size()) {
