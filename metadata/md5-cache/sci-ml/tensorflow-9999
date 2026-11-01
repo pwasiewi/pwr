@@ -1,0 +1,16 @@
+BDEPEND=python_single_target_python3_14? ( dev-lang/python:3.14 ) dev-build/bazelisk[bazel-symlink] dev-lang/nasm dev-vcs/git llvm-core/clang:22 llvm-core/lld:22 python_single_target_python3_14? ( dev-python/installer[python_targets_python3_14(-)] ) >=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=compile configure install postinst pretend setup unpack
+DEPEND=app-arch/snappy:= dev-db/sqlite:3 dev-libs/jsoncpp:= media-libs/giflib:= media-libs/libjpeg-turbo:= media-libs/libpng:= net-misc/curl virtual/zlib:= cuda? ( dev-libs/cudnn >=dev-util/nvidia-cuda-toolkit-13 )
+DESCRIPTION=Computation framework using data flow graphs (live, built from source)
+EAPI=8
+HOMEPAGE=https://www.tensorflow.org/ https://github.com/tensorflow/tensorflow
+INHERIT=check-reqs git-r3 multiprocessing python-single-r1
+IUSE=cuda +python_single_target_python3_14
+LICENSE=Apache-2.0 cuda? ( NVIDIA-CUDA )
+PROPERTIES=live live
+RDEPEND=app-arch/snappy:= dev-db/sqlite:3 dev-libs/jsoncpp:= media-libs/giflib:= media-libs/libjpeg-turbo:= media-libs/libpng:= net-misc/curl virtual/zlib:= cuda? ( dev-libs/cudnn >=dev-util/nvidia-cuda-toolkit-13 ) python_single_target_python3_14? ( dev-lang/python:3.14 ) python_single_target_python3_14? ( >=dev-python/absl-py-1.0.0[python_targets_python3_14(-)] >=dev-python/astunparse-1.6.0[python_targets_python3_14(-)] >=dev-python/flatbuffers-25.9.23[python_targets_python3_14(-)] >=dev-python/gast-0.2.1[python_targets_python3_14(-)] >=dev-python/google-pasta-0.1.1[python_targets_python3_14(-)] >=dev-python/grpcio-1.24.3[python_targets_python3_14(-)] dev-python/h5py[python_targets_python3_14(-)] >=dev-python/ml-dtypes-0.5.1[python_targets_python3_14(-)] >=dev-python/numpy-1.26.0[python_targets_python3_14(-)] >=dev-python/opt-einsum-2.3.2[python_targets_python3_14(-)] dev-python/packaging[python_targets_python3_14(-)] <dev-python/protobuf-8[python_targets_python3_14(-)] >=dev-python/requests-2.21.0[python_targets_python3_14(-)] >=dev-python/six-1.12.0[python_targets_python3_14(-)] >=dev-python/termcolor-1.1.0[python_targets_python3_14(-)] >=dev-python/typing-extensions-3.6.6[python_targets_python3_14(-)] >=dev-python/wrapt-1.11.0[python_targets_python3_14(-)] sci-ml/keras[python_targets_python3_14(-)] )
+REQUIRED_USE=^^ ( python_single_target_python3_14 )
+RESTRICT=network-sandbox strip test cuda? ( bindist )
+SLOT=0
+_eclasses_=check-reqs	12ab9d3fc16bfe1f87c6fb652324b57c	git-r3	e6c2f983e006e805160436c75a0c1562	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	eapi9-pipestatus	d2c134036ac31c3085aebc9147f572bd	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	python-utils-r1	025367880f07ae6444e6035a49db0dab	python-single-r1	47d8ac9be330c9366112b78fd4f8ce57
+_md5_=5d20f4e470995d1acc41d23ec5551440
