@@ -32,44 +32,16 @@ Respun 2026-10-16 against unsloth-zoo 4bc093a0: load_lora body moved into
 _build_lora_request (merged-rollout work); create_lora_statistics rewritten
 adapter-generic by d01c44cf (#1539). Same three snapshot points (lora_A,
 lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
+Respun 2026-11-02 against unsloth-zoo 20c41247: tensors come from _lora_state_dict()
+(FSDP2 gather, #2180); upstream's fp32 upcast of trainable params
+(test_vllm_lora_dtype_alias_guard.py) prevents the alias only while the engine
+dtype differs, so the clone stays.
 
---- a/unsloth_zoo/vllm_utils.py
-+++ b/unsloth_zoo/vllm_utils.py
-@@ -6241,7 +6241,30 @@
-         # its keys (e.g. ...lora_A.ref.weight) survive the .default strip
-         # and vLLM's parse_fine_tuned_lora_name() raises
-         # "... is unsupported LoRA weight".
--        state_dict = {k.replace(".default", ""):v for k, v in items if ".lora_A.default." in k or ".lora_B.default." in k}
-+        # Ship CLONES, never the live training tensors. vLLM's
-+        # LoRAModel.from_lora_tensors stores `tensor.to(device, dtype)`,
-+        # which is a NO-OP (same storage) when device+dtype already match,
-+        # so the engine would hold ALIASES of the training weights:
-+        # (1) LoRALayerWeights.optimize() then runs `lora_b *= scaling`
-+        #     in-place -> with lora_alpha != lora_rank the TRAINING weights
-+        #     get multiplied by s on every hot-load (s^8 per GRPO step
-+        #     observed; rollouts rot to gibberish within ~5 steps);
-+        # (2) the engine's adapter registry keeps live references into
-+        #     training memory, so later readers (save_pretrained_merged with
-+        #     the engine alive) race the engine's allocator churn.
-+        # A LoRA-sized clone (a few MB) per hot-load is negligible.
-+        # inference_mode(False): load_lora runs under @torch.inference_mode,
-+        # so a plain clone would be an inference tensor and vLLM's later
-+        # in-place LoRALayerWeights.optimize() scaling (`lora_b *= scaling`)
-+        # would raise "Inplace update to inference tensor outside
-+        # InferenceMode" on dispatch paths that do not wrap _load_adapter in
-+        # inference mode.
-+        with torch.inference_mode(False):
-+            state_dict = {
-+                k.replace(".default", ""): v.detach().clone()
-+                for k, v in items
-+                if ".lora_A.default." in k or ".lora_B.default." in k
-+            }
-         if exclude:
-             # Folded into the base weights already: sending them too would apply the delta twice.
-             state_dict = {k: v for k, v in state_dict.items() if re.split(r"\.lora_[AB]\.", k)[0] not in exclude}
+diff --git a/unsloth_zoo/saving_utils.py b/unsloth_zoo/saving_utils.py
+index 1de98123..d5cd03bc 100644
 --- a/unsloth_zoo/saving_utils.py
 +++ b/unsloth_zoo/saving_utils.py
-@@ -443,6 +443,15 @@
+@@ -445,6 +445,15 @@ def _is_bnb_4bit_base(module):
  pass
  
  
@@ -84,16 +56,16 @@ lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
 +
  def _merge_lora(W, lora_stats, name, use_dequant_base = False):
      if lora_stats.lora_A is None or lora_stats.lora_B is None: return W
-     # Reached when a model adapts a Conv2d sharing its name with a linear (`proj` is both a
-@@ -488,6 +497,7 @@
-         # else: a shape mismatch is structural (e.g. vocab resize handled below), not a dequant
-         # failure, so keep the 16bit W here and let the resize path reconcile it.
+     # Reached when a model adapts a Conv2d sharing a name with a linear (e.g. `proj`); otherwise addmm_ fails with an opaque 'mat1 must be a matrix' error.
+@@ -479,6 +488,7 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
+             W = W_dq
+         # A shape mismatch is structural (e.g. vocab resize), not a dequant failure, so keep the 16bit W and let the resize path reconcile it.
      W = W.to(device, dtype = torch.float32, non_blocking = True)
 +    W_base_absmax = _absmax(W)
      lora_B = lora_stats.lora_B.to(device, dtype = torch.float32, non_blocking = True)
      lora_A = lora_stats.lora_A.to(device, dtype = torch.float32, non_blocking = True)
-     # Handle vocab resize: LoRA may have more rows than base safetensors weight
-@@ -514,6 +524,18 @@
+     module = getattr(lora_stats, "module", None)
+@@ -507,6 +517,18 @@ def _merge_lora(W, lora_stats, name, use_dequant_base = False):
          W = (magnitude / weight_norm).unsqueeze(1) * W
      if not torch.isfinite(torch.amax(W)).item():
          raise ValueError('Unsloth: Merge failed as there are infinite elements in ' + name)
@@ -112,7 +84,7 @@ lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
      return W
  pass
  
-@@ -710,6 +732,23 @@
+@@ -717,6 +739,23 @@ def _get_lora_scaling(module):
  pass
  
  
@@ -136,7 +108,7 @@ lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
  @torch.inference_mode
  def create_lora_statistics(model, merge_into_original = False, return_state_dict = True):
      # All Unsloth Zoo code licensed under LGPLv3
-@@ -737,14 +776,14 @@
+@@ -744,14 +783,14 @@ def create_lora_statistics(model, merge_into_original = False, return_state_dict
              expand_module_keys(name, module, remove_keys)
              if adapter != _get_active_adapter(inner_model.get_submodule(key)): continue
              if kind == "lora_A":
@@ -154,3 +126,40 @@ lora_B, magnitude); lora_B_bias and lora_embedding_A/B views stay live.
  
          elif name.endswith((".lora_embedding_A", ".lora_embedding_B")):
              # PEFT Embedding delta (B_e @ A_e).T == Linear form with lora_B = A_e.T, lora_A = B_e.T.
+diff --git a/unsloth_zoo/vllm_utils.py b/unsloth_zoo/vllm_utils.py
+index 01f829db..43d68675 100644
+--- a/unsloth_zoo/vllm_utils.py
++++ b/unsloth_zoo/vllm_utils.py
+@@ -7299,8 +7299,30 @@ def _build_lora_request(model, save_directory, load_tensors, lora_request_id, ex
+         # its keys (e.g. ...lora_A.ref.weight) survive the .default strip
+         # and vLLM's parse_fine_tuned_lora_name() raises
+         # "... is unsupported LoRA weight".
+-        state_dict = {k.replace(".default", ""):v for k, v in _lora_state_dict(model).items()
+-                      if ".lora_A.default." in k or ".lora_B.default." in k}
++        # Ship CLONES, never the live training tensors. vLLM's
++        # LoRAModel.from_lora_tensors stores `tensor.to(device, dtype)`,
++        # which is a NO-OP (same storage) when device+dtype already match,
++        # so the engine would hold ALIASES of the training weights:
++        # (1) LoRALayerWeights.optimize() then runs `lora_b *= scaling`
++        #     in-place -> with lora_alpha != lora_rank the TRAINING weights
++        #     get multiplied by s on every hot-load (s^8 per GRPO step
++        #     observed; rollouts rot to gibberish within ~5 steps);
++        # (2) the engine's adapter registry keeps live references into
++        #     training memory, so later readers (save_pretrained_merged with
++        #     the engine alive) race the engine's allocator churn.
++        # A LoRA-sized clone (a few MB) per hot-load is negligible.
++        # inference_mode(False): load_lora runs under @torch.inference_mode,
++        # so a plain clone would be an inference tensor and vLLM's later
++        # in-place LoRALayerWeights.optimize() scaling (`lora_b *= scaling`)
++        # would raise "Inplace update to inference tensor outside
++        # InferenceMode" on dispatch paths that do not wrap _load_adapter in
++        # inference mode.
++        with torch.inference_mode(False):
++            state_dict = {
++                k.replace(".default", ""): v.detach().clone()
++                for k, v in _lora_state_dict(model).items()
++                if ".lora_A.default." in k or ".lora_B.default." in k
++            }
+         if exclude:
+             # Folded into the base weights already: sending them too would apply the delta twice.
+             state_dict = {k: v for k, v in state_dict.items() if re.split(r"\.lora_[AB]\.", k)[0] not in exclude}

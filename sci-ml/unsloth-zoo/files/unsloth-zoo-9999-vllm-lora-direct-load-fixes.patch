@@ -13,9 +13,14 @@
 # "bug (c)": rollouts rot coherent -> gibberish -> token loops in ~5 steps).
 # No scaling scheme is correct on a shared buffer, so raise loudly and
 # require lora_alpha == lora_rank (s == 1) instead of corrupting silently.
+Respun 2026-11-02 against unsloth-zoo 20c41247 (context only, no fuzz).
+
+diff --git a/unsloth_zoo/vllm_utils.py b/unsloth_zoo/vllm_utils.py
+index 43d68675..46304192 100644
 --- a/unsloth_zoo/vllm_utils.py
 +++ b/unsloth_zoo/vllm_utils.py
-@@ -2870,5 +2870,17 @@
+@@ -5728,6 +5728,18 @@ def load_lora_directly(model):
+ 
      # Must also scale B with scaling since vLLM does this
      for model_lora_B, (vllm_lora_B, s) in zip(model_loras_B, vllm_loras_B):
 +        if s is not None and vllm_lora_B.data_ptr() == model_lora_B.data_ptr():

@@ -1,0 +1,34 @@
+Retry the rotary_emb reinit without the device kwarg (Phi3RotaryEmbedding takes only config).
+
+zoo 20c41247 rebuilds every rotary_emb as cls(config=..., device=...); on Phi-3/Phi-4 (transformers 5.22)
+that raises TypeError and the reinit is skipped with "Unsloth: skipped rotary_emb reinit". Build on the
+default device and .to(target_device) instead. ::pwr 2026-11-02, found in the step-3 stack gates.
+
+diff --git a/unsloth_zoo/empty_model.py b/unsloth_zoo/empty_model.py
+index 670f8260..a8810512 100644
+--- a/unsloth_zoo/empty_model.py
++++ b/unsloth_zoo/empty_model.py
+@@ -1065,10 +1065,19 @@ def finalize_huggingface_model(
+                 )
+                 rotary_config = vision_config if is_vision_rotary else text_config
+                 try:
+-                    module.rotary_emb = module.rotary_emb.__class__(
+-                        config = rotary_config,
+-                        device = target_device,
+-                    )
++                    try:
++                        module.rotary_emb = module.rotary_emb.__class__(
++                            config = rotary_config,
++                            device = target_device,
++                        )
++                    except TypeError as device_error:
++                        # Some rotary classes (Phi3RotaryEmbedding in transformers 5) take no device kwarg:
++                        # build on the default device and move, instead of skipping the reinit.
++                        if "device" not in str(device_error):
++                            raise
++                        module.rotary_emb = module.rotary_emb.__class__(
++                            config = rotary_config,
++                        ).to(target_device)
+                 except Exception as rotary_reinit_error:
+                     logger.warning(
+                         f"Unsloth: skipped rotary_emb reinit for {module_name}: {rotary_reinit_error}"

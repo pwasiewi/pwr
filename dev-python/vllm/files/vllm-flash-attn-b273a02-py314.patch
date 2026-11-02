@@ -8,7 +8,7 @@ are built against the stable ABI (USE_SABI 3 / WITH_SOABI), so the abi3 module
 is independent of the CPython minor; this whitelist is a pure build-time
 assertion, not an ABI constraint. Widening it to add "3.14" is safe.
 
-Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
+Tested against vllm-project/flash-attention @ b273a02 (pin from vllm main b8c04dd3b4, 2026-11-01).
 
 --- CMakeLists.txt.orig
 +++ CMakeLists.txt

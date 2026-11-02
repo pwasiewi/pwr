@@ -13,12 +13,18 @@ Only the last sub-adapter survives, and activation later fails, e.g.:
 
 Strip stacked mappings before mapping LoRA names; per-sub-module LoRAs
 are merged later via packed_modules_mapping (_create_merged_loras_inplace).
---- a/vllm/lora/utils.py	2026-07-06 20:52:08.549839086 +0200
-+++ b/vllm/lora/utils.py	2026-07-06 20:52:59.953373424 +0200
-@@ -168,6 +168,16 @@
+
+Respun 2026-11-02 on vllm main b8c04dd3b4 (context-only: pydocstyle blank line
+before the closing docstring quotes, 8c1557a79c).
+
+diff --git a/vllm/lora/utils.py b/vllm/lora/utils.py
+index 35e7ec9abf..4a8979e697 100644
+--- a/vllm/lora/utils.py
++++ b/vllm/lora/utils.py
+@@ -193,6 +193,16 @@ def parse_fine_tuned_lora_name(
              is_lora_a whether the tensor is lora_a or lora_b.
-     """
  
+     """
 +    # Stacked (fusion) mappings like ".q_proj" -> (".qkv_proj", "q") must
 +    # not be applied to LoRA tensor names: q/k/v adapter entries would
 +    # collapse into a single "qkv_proj" key in from_lora_tensors and

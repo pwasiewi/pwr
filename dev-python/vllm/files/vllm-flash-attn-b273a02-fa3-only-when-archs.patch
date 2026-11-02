@@ -3,20 +3,24 @@ Skip _vllm_fa3_C target body when FA3_ARCHS is empty.
 vllm-flash-attn intersects "9.0a;" (Hopper) with CUDA_ARCHS to compute
 FA3_ARCHS, then clears per-file gencode flags when empty. But the
 define_gpu_extension_target(_vllm_fa3_C ...) call adds all FA3 .cu files to the
-target unconditionally, so nvcc compiles them anyway with its default arch —
-wasting 30-60 min on Ampere/Ada/Blackwell for kernels that can't run there
+target unconditionally, so nvcc compiles them anyway with its default arch,
+wasting 30-60 min on Ampere/Ada/Blackwell for kernels that cannot run there
 (FA3 is Hopper-only; Blackwell sm_120 is not covered).
 
-Wrap the real target-definition block in if(FA3_ARCHS) and add an empty
-add_custom_target(_vllm_fa3_C) stub in the else-branch — vllm's setup.py drives
-the build via explicit ninja --target=_vllm_fa3_C regardless of arch, so the
-target must exist even as a no-op or the build aborts.
+Wrap the real target-definition block (define_gpu_extension_target through the
+CXX_STANDARD 20 set_target_properties that upstream added after 2c839c3) in
+if(FA3_ARCHS) and add an empty add_custom_target(_vllm_fa3_C) stub in the
+else-branch: vllm's setup.py drives the build via an explicit
+ninja --target=_vllm_fa3_C regardless of arch, so the target must exist even
+as a no-op or the build aborts.
 
-Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
+Rewritten 2026-11-02 for vllm-project/flash-attention @ b273a02 (pin from vllm
+main b8c04dd3b4): the FA3 block gained TORCH_TARGET_VERSION/USE_CUDA defines
+and the per-target C++20 property, so the 2c839c3 hunk no longer applied.
 
 --- CMakeLists.txt.orig
 +++ CMakeLists.txt
-@@ -267,45 +267,51 @@
+@@ -278,50 +278,56 @@
              CUDA_ARCHS "${FA3_ARCHS}")
      endif()
  
@@ -77,6 +81,8 @@ Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
 -        FLASHATTENTION_DISABLE_APPENDKV
 -        CUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED
 -        CUTLASS_ENABLE_GDC_FOR_SM90
+-        TORCH_TARGET_VERSION=0x020A000000000000ULL
+-        USE_CUDA
 -    )
 +        # custom definitions
 +        target_compile_definitions(_vllm_fa3_C PRIVATE
@@ -96,7 +102,14 @@ Tested against vllm-project/flash-attention @ 2c839c3 (pin from vllm main).
 +            FLASHATTENTION_DISABLE_APPENDKV
 +            CUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED
 +            CUTLASS_ENABLE_GDC_FOR_SM90
++            TORCH_TARGET_VERSION=0x020A000000000000ULL
++            USE_CUDA
 +        )
+ 
+-    # See _vllm_fa2_C above: enforce C++20 on the target for the vLLM subproject build.
+-    set_target_properties(_vllm_fa3_C PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
++        # See _vllm_fa2_C above: enforce C++20 on the target for the vLLM subproject build.
++        set_target_properties(_vllm_fa3_C PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 +    else()
 +        message(STATUS "FA3 will not compile: no Hopper arch in CUDA_ARCHS=${CUDA_ARCHS}")
 +        # Empty stub so vllm setup.py's `ninja --target=_vllm_fa3_C` succeeds.

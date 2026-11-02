@@ -64,8 +64,9 @@ src_prepare() {
 	# fixes the same sm_12x flex backward smem failure (max(staged, linear)
 	# estimate against shared_memory_per_block_optin).
 	# don't pass TRL's frozen "ref" adapter tensors to vLLM
-	# (skip-ref + dealias respun 2026-10-16 on zoo main 4bc093a0; they no
-	# longer apply to the old pin 40963429 — move the zoo pin with them)
+	# (skip-ref + dealias respun 2026-10-16 on zoo main 4bc093a0, and again
+	# 2026-11-02 on 20c41247 where the tensors come from _lora_state_dict();
+	# they do not apply to an older pin — move env/zoo-git-pin.conf with them)
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-skip-ref-adapter.patch"
 	# gate/up duplication + aliased-buffer scaling tripwire (bug (c))
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-direct-load-fixes.patch"
@@ -74,6 +75,9 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-9999-vllm-lora-dealias-merge-guard.patch"
 	# alias the removed in-tree vLLM bitsandbytes modules to vllm-bnb-plugin
 	eapply "${FILESDIR}/${PN}-9999-vllm-bnb-plugin-shim.patch"
+	# Phi3RotaryEmbedding takes no device kwarg: retry the rotary reinit
+	# without it instead of skipping (2026-11-02, step-3 gate B on Phi-4)
+	eapply "${FILESDIR}/${PN}-9999-rotary-reinit-no-device.patch"
 
 	rm -rf scripts || die
 	rm -rf tests || die

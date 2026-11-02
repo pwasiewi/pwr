@@ -30,12 +30,10 @@ DEPEND="${RDEPEND}"
 # Test suite requires network, model downloads, and optional backends.
 RESTRICT="test"
 
-src_prepare() {
-	default
-
-	# frozen "ref" adapter must inherit dtype from "default" (GRPO, beta != 0)
-	eapply "${FILESDIR}/${PN}-9999-grpo-ref-adapter-dtype.patch"
-}
+# (grpo-ref-adapter-dtype.patch retired 2026-11-02: it deleted the
+# `ref_param.data.copy_(param.data)` line that unsloth's ref-adapter strip
+# anchors on, so beta != 0 runs under unsloth still built the "ref" adapter;
+# its second hunk also stopped applying at TRL >= 1.15. Pin: env/trl-git-pin.conf.)
 
 pkg_postinst() {
 	elog "TRL optional integrations for this Unsloth GRPO setup include:"

@@ -28,7 +28,8 @@ EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
 # bypassing its own FetchContent GIT_TAG.  src_unpack only *warns* if vllm HEAD
 # has since bumped the GIT_TAG — bump VLLM_FA_COMMIT (+ tarball, Manifest, the
 # two -py314 / -fa3-only patches) when that happens.
-VLLM_FA_COMMIT="2c839c33742309ec41e620bf837495ec9926c56e"
+# 2026-11-02: 2c839c3 -> b273a02 for vllm main b8c04dd3b4 (cmake GIT_TAG).
+VLLM_FA_COMMIT="b273a02621d3c94bc747df67204f591b67f38fae"
 
 DESCRIPTION="High-throughput, memory-efficient inference and serving engine for LLMs (live)"
 HOMEPAGE="
@@ -58,12 +59,18 @@ REQUIRED_USE="
 # pytorch/torchaudio/torchvision: >= floor so live pytorch-9999 satisfies.
 # flashinfer/tilelang/humming-kernels keep ~ pins — they are tightly coupled
 # to a specific vllm release and need manual bump on HEAD divergence.
+# 2026-11-02, pinned commit b8c04dd3b4 (requirements/{common,cuda}.txt):
+# flashinfer 0.7.2_p1, cutlass-dsl 4.8.0, quack 0.6.5, humming 0.1.18,
+# cudnn-frontend >=1.31.0, xgrammar 0.2.8, oss-harmony replaces
+# openai-harmony, mistral-common >=1.13.0; orjson is imported unconditionally
+# by the serve path since f46ea25e58. fastsafetensors is single-impl in
+# ::stuff, hence PYTHON_SINGLE_USEDEP outside python_gen_cond_dep.
 RDEPEND="
 	>=sci-ml/pytorch-2.11.0[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/caffe2[distributed,gloo]
-	>=sci-ml/transformers-5.10.4[${PYTHON_SINGLE_USEDEP}]
-	>=sci-ml/tokenizers-0.21.1[${PYTHON_SINGLE_USEDEP}]
-	>=dev-python/xgrammar-0.2.0[${PYTHON_SINGLE_USEDEP}]
+	>=sci-ml/transformers-5.16.1[${PYTHON_SINGLE_USEDEP}]
+	>=sci-ml/tokenizers-0.23.3[${PYTHON_SINGLE_USEDEP}]
+	>=dev-python/xgrammar-0.2.8[${PYTHON_SINGLE_USEDEP}]
 	<dev-python/xgrammar-1.0.0[${PYTHON_SINGLE_USEDEP}]
 	>=dev-python/compressed-tensors-0.17.0[${PYTHON_SINGLE_USEDEP}]
 	app-alternatives/ninja
@@ -98,7 +105,7 @@ RDEPEND="
 		>=dev-python/pyzmq-25.0.0[${PYTHON_USEDEP}]
 		dev-python/msgspec[${PYTHON_USEDEP}]
 		>=dev-python/gguf-0.17.0[${PYTHON_USEDEP}]
-		>=dev-python/mistral-common-1.11.3[${PYTHON_USEDEP},image]
+		>=dev-python/mistral-common-1.13.0[${PYTHON_USEDEP},image]
 		>=media-libs/opencv-4.12.0[python,${PYTHON_USEDEP}]
 		dev-python/pyyaml[${PYTHON_USEDEP}]
 		dev-python/six[${PYTHON_USEDEP}]
@@ -112,7 +119,8 @@ RDEPEND="
 		dev-python/cbor2[${PYTHON_USEDEP}]
 		dev-python/ijson[${PYTHON_USEDEP}]
 		dev-python/setproctitle[${PYTHON_USEDEP}]
-		>=dev-python/openai-harmony-0.0.3[${PYTHON_USEDEP}]
+		>=dev-python/oss-harmony-0.0.11[${PYTHON_USEDEP}]
+		dev-python/orjson[${PYTHON_USEDEP}]
 		>=dev-python/anthropic-0.71.0[${PYTHON_USEDEP}]
 		>=dev-python/model-hosting-container-standards-0.1.14[${PYTHON_USEDEP}]
 		<dev-python/model-hosting-container-standards-1.0.0[${PYTHON_USEDEP}]
@@ -133,14 +141,15 @@ RDEPEND="
 		|| ( >=sci-ml/caffe2-2.11.0-r90 ~sci-ml/caffe2-9999 )
 		>=sci-ml/torchaudio-2.11.0
 		>=sci-ml/torchvision-0.26.0[${PYTHON_SINGLE_USEDEP}]
-		~dev-python/flashinfer-python-0.6.17[${PYTHON_SINGLE_USEDEP}]
+		~dev-python/flashinfer-python-0.7.2_p1[${PYTHON_SINGLE_USEDEP}]
 		~dev-python/tilelang-0.1.12[${PYTHON_SINGLE_USEDEP}]
-		>=dev-python/quack-kernels-0.3.3[${PYTHON_SINGLE_USEDEP}]
-		humming? ( ~dev-python/humming-kernels-0.1.4[${PYTHON_SINGLE_USEDEP}] )
+		~dev-python/quack-kernels-0.6.5[${PYTHON_SINGLE_USEDEP}]
+		humming? ( ~dev-python/humming-kernels-0.1.18[${PYTHON_SINGLE_USEDEP}] )
+		>=dev-python/fastsafetensors-0.3.3[${PYTHON_SINGLE_USEDEP}]
 		$(python_gen_cond_dep '
 			>=dev-python/numba-0.65.0[${PYTHON_USEDEP}]
-			>=dev-python/fastsafetensors-0.3.2[${PYTHON_USEDEP}]
-			~dev-python/nvidia-cutlass-dsl-4.5.2[${PYTHON_USEDEP}]
+			~dev-python/nvidia-cutlass-dsl-4.8.0[${PYTHON_USEDEP}]
+			>=dev-python/nvidia-cudnn-frontend-1.31.0[${PYTHON_USEDEP}]
 			~dev-python/triton-bin-3.9.0[${PYTHON_USEDEP}]
 		')
 		dev-util/nvidia-cuda-toolkit:=
@@ -181,6 +190,7 @@ BDEPEND="
 	')
 	cuda? (
 		dev-util/nvidia-cuda-toolkit:=
+		sys-devel/gcc:16
 	)
 	rocm? (
 		>=dev-util/hip-7.2:=
@@ -260,11 +270,12 @@ src_prepare() {
 			if [[ -f ${py314_patch} ]]; then
 				eapply -p0 "${py314_patch}"
 			fi
+			# Since b273a02 flash-attn sets CXX_STANDARD 20 on both of its
+			# extension targets itself (after define_gpu_extension_target's
+			# C++17 default), so no cxx20 patch exists for it; one is applied
+			# only for an older pin that still ships one.
 			if [[ -f ${cxx20_patch} ]]; then
 				eapply -p0 "${cxx20_patch}"
-			else
-				ewarn "No cxx20 patch for flash-attn ${VLLM_FA_COMMIT:0:7};"
-				ewarn "build will fail against ATen headers requiring C++20 (-std=c++17 hardcoded upstream)."
 			fi
 			popd >/dev/null || die
 		fi
@@ -291,7 +302,10 @@ src_configure() {
 		export VLLM_TARGET_DEVICE=cuda
 		local fa_dir="${WORKDIR}/flash-attention-${VLLM_FA_COMMIT}"
 		[[ -d ${fa_dir} ]] && export VLLM_FLASH_ATTN_SRC_DIR="${fa_dir}"
-		export CUDAHOSTCXX=/usr/bin/x86_64-pc-linux-gnu-g++-15
+		# CUDA 13.4.3 nvcc accepts gcc <= 16 (crt/host_config.h); gcc:15 was
+		# depcleaned on nvhard on 2026-10-19.
+		export CUDAHOSTCXX="${BROOT}/usr/bin/${CHOST}-g++-16"
+		[[ -x ${CUDAHOSTCXX} ]] || die "nvcc host compiler ${CUDAHOSTCXX} not found"
 		export CMAKE_ARGS+=" -DCMAKE_CUDA_HOST_COMPILER=${CUDAHOSTCXX}"
 		export MAX_JOBS="${MAX_JOBS:-4}"
 		export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-${MAX_JOBS}}"
@@ -315,9 +329,10 @@ pkg_postinst() {
 	if use cuda; then
 		elog "vllm's CUDA path pulls dev-python/flashinfer-python, which"
 		elog "JIT-compiles GPU kernels with nvcc on first inference. CUDA"
-		elog "13.x nvcc rejects host compilers newer than gcc 15:"
+		elog "13.4 nvcc rejects host compilers newer than gcc 16; if the"
+		elog "active gcc is newer, point nvcc at gcc 16:"
 		elog ""
-		elog "  NVCC_PREPEND_FLAGS=\"-ccbin /usr/bin/${CHOST}-g++-15\" vllm serve ..."
+		elog "  NVCC_PREPEND_FLAGS=\"-ccbin /usr/bin/${CHOST}-g++-16\" vllm serve ..."
 		elog ""
 		elog "Flash-attention commit used: ${VLLM_FA_COMMIT:0:7}"
 		elog "If vllm HEAD changed the GIT_TAG, re-run: ebuild ... fetch"

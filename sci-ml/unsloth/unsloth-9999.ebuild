@@ -62,8 +62,10 @@ src_prepare() {
 	default
 
 	eapply "${FILESDIR}/${PN}-9999-disable-incompatible-vllm.patch"
-	# TRL >= 1.8 unpacks (logps, entropies, aux_loss) — 3-tuple returns
-	eapply "${FILESDIR}/${PN}-9999-trl18-logps-aux-loss-3tuple.patch"
+	# (trl18-logps-aux-loss-3tuple.patch retired 2026-11-02: the compute_efficient
+	# early exit still returns (None, None), but its only caller is unsloth's own
+	# get_logps_func, which takes [0]; TRL's 3-tuple call sites never pass
+	# compute_efficient=True. Respun patches pair with unsloth a8480378 / zoo 20c41247.)
 	# (export-mixed-precision-env.patch retired 2026-08-08: upstream merged
 	# the explicit-bf16/fp16 ACCELERATE_MIXED_PRECISION export verbatim —
 	# unslothai/unsloth#4891 — and the stale hunk stopped applying.)
