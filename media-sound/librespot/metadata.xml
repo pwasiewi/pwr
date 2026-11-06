@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>pwasiewi@gmail.com</email>
+		<name>Piotr Wasiewicz</name>
+	</maintainer>
+	<longdescription lang="en">librespot is an open source client library for Spotify that also
+		acts as a Spotify Connect receiver: the device shows up in the official Spotify clients,
+		which only steer playback, while the audio is fetched and decoded locally. Needs a Spotify
+		Premium account.</longdescription>
+	<use>
+		<flag name="avahi">Announce the Spotify Connect receiver through avahi-daemon over D-Bus instead of the built-in mDNS responder</flag>
+		<flag name="gstreamer">Enable the GStreamer audio backend</flag>
+		<flag name="portaudio">Enable the PortAudio audio backend</flag>
+		<flag name="pulseaudio">Enable the PulseAudio audio backend (also PipeWire's PulseAudio server)</flag>
+		<flag name="rodio">Enable the Rodio audio backend (cpal, ALSA on Linux)</flag>
+		<flag name="sdl">Enable the SDL2 audio backend</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">librespot-org/librespot</remote-id>
+		<bugs-to>https://github.com/librespot-org/librespot/issues</bugs-to>
+		<changelog>https://github.com/librespot-org/librespot/blob/dev/CHANGELOG.md</changelog>
+	</upstream>
+</pkgmetadata>
