@@ -17,6 +17,10 @@ if [[ ${PV} == 999999 ]] ; then
 		src/runtime_src/core/common/elf
 		src/runtime_src/xdp
 		src/runtime_src/core/common/aiebu/src/cpp/ELFIO
+		# aiebu 2026-11 vendors zstd as a nested submodule and globs its
+		# lib/{common,compress,decompress}/*.c into a local static target;
+		# without it cmake dies with 'No SOURCES given to target: aiebu_zstd'.
+		src/runtime_src/core/common/aiebu/src/cpp/zstd
 		# XDP moved the AIE register headers into a nested submodule
 		# (2026-08: generates aie_codegen.h into the build dir; without it
 		# every xdp_aie_* plugin dies at '#include <aie_codegen.h>').
