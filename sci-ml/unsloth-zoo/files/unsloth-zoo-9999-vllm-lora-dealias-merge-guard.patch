@@ -81,7 +81,7 @@ index 1de98123..d5cd03bc 100644
 +            "time look like recycled/corrupted GPU memory. Re-merge offline from "
 +            "the last checkpoint (do not merge with a live vLLM engine)."
 +        )
-     return W
+     return W.t().contiguous() if flip else W
  pass
  
 @@ -717,6 +739,23 @@ def _get_lora_scaling(module):
