@@ -1,28 +1,30 @@
-# Copyright 2026 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-ROCM_VERSION="6.3"
+# ::pwr copy of ::stuff's llama-cpp-9999 (snapshot 2026-10-28) plus the CUDA
+# flash-attention patch below. ::pwr has priority over ::stuff, so this file is
+# what the host and the nvidiahard image build; keep it in step with ::stuff.
+# The upstream commit is pinned OPERATIONALLY (EGIT_OVERRIDE_COMMIT_GGML_ORG_LLAMA_CPP
+# at emerge time / package.env), never here. (2026-11-10)
 
-inherit cmake cuda rocm linux-info
+# Selects rocm.eclass's 10.x target list, the first with gfx1152/gfx1153.
+# The hip/hipBLAS floor stays at 7.0 below: ROCM_USEDEP already requires a
+# hipBLAS built for every enabled target.
+ROCM_VERSION="10.0"
+PYTHON_COMPAT=( python3_{12..15} )
+
+inherit cmake cuda flag-o-matic git-r3 rocm linux-info python-any-r1 toolchain-funcs
 
 TINY_LLAMAS_COMMIT="99dd1a73db5a37100bd4ae633f4cfce6560e1567"
 
 DESCRIPTION="Port of Facebook's LLaMA model in C/C++"
 HOMEPAGE="https://github.com/ggml-org/llama.cpp"
 
-if [[ ${PV} == *9999* ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://github.com/ggml-org/llama.cpp.git"
-else
-	MY_PV="b${PV#0_pre}"
-	SRC_URI="https://github.com/ggml-org/llama.cpp/archive/refs/tags/${MY_PV}.tar.gz -> ${P}.tar.gz"
-	S="${WORKDIR}/llama.cpp-${MY_PV}"
-	KEYWORDS="~amd64"
-fi
+EGIT_REPO_URI="https://github.com/ggml-org/llama.cpp.git"
 
-SRC_URI+="
+SRC_URI="
 	examples? (
 		https://huggingface.co/ggml-org/tiny-llamas/resolve/${TINY_LLAMAS_COMMIT}/stories15M-q4_0.gguf
 			-> ggml-org_models_tinyllamas_stories15M-q4_0-${TINY_LLAMAS_COMMIT}.gguf
@@ -31,39 +33,46 @@ SRC_URI+="
 
 LICENSE="MIT"
 SLOT="0"
-CPU_FLAGS_X86=( avx avx2 f16c )
 
-# wwma USE explained here: https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md#hip
-IUSE="curl openblas +openmp blis rocm cuda opencl openssl vulkan flexiblas wmma examples"
+CPU_FLAGS_X86=(
+	amx_bf16 amx_int8 amx_tile avx avx2 avx512_bf16 avx512_vnni avx512f
+	avx512vbmi avx_vnni bmi2 f16c fma3 sse4_2
+)
 
+IUSE="debug openblas +openmp blis rocm cuda opencl +openssl vulkan flexiblas examples +webui"
+IUSE+=" ${CPU_FLAGS_X86[@]/#/cpu_flags_x86_}"
+
+# HIP builds the CUDA backend sources, and ggml registers that backend once.
 REQUIRED_USE="
 	?? (
 		openblas
 		blis
 		flexiblas
 	)
-	wmma? (
-		rocm
-	)
+	?? ( cuda rocm )
+	rocm? ( ${ROCM_REQUIRED_USE} )
 "
 
-# curl is needed for pulling models from huggingface
-# numpy is used by convert_hf_to_gguf.py
+# No pinned UI distfile exists for a live checkout; CMake fetches it from
+# Hugging Face at build time.
+RESTRICT="webui? ( network-sandbox )"
+
+# No sycl flag: the SYCL backend needs Intel's icpx, MKL's SYCL API and a
+# GPU-enabled oneDNN, none of which ::gentoo packages. checked 2026-10-19
 CDEPEND="
-	curl? ( net-misc/curl:= )
 	openblas? ( sci-libs/openblas:= )
 	openmp? ( llvm-runtimes/openmp:= )
 	blis? ( sci-libs/blis:= )
 	flexiblas? ( sci-libs/flexiblas:= )
 	rocm? (
-		>=dev-util/hip-${ROCM_VERSION}:=
-		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
-		wmma? (
-			>=sci-libs/rocWMMA-${ROCM_VERSION}:=
-		)
+		>=dev-util/hip-7.0:=
+		>=sci-libs/hipBLAS-7.0:=[${ROCM_USEDEP}]
+		>=sci-libs/rocBLAS-7.0:=[${ROCM_USEDEP}]
 	)
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	openssl? ( dev-libs/openssl:= )
+	opencl? ( dev-libs/opencl-icd-loader )
+	vulkan? ( media-libs/vulkan-loader )
 "
 DEPEND="${CDEPEND}
 	opencl? ( dev-util/opencl-headers )
@@ -72,14 +81,28 @@ DEPEND="${CDEPEND}
 		dev-util/vulkan-headers
 	)
 "
-RDEPEND="${CDEPEND}
-	dev-python/numpy
-	opencl? ( dev-libs/opencl-icd-loader )
-	vulkan? ( media-libs/vulkan-loader )
+RDEPEND="${CDEPEND}"
+# The OpenCL backend embeds its kernels with a stdlib-only Python script.
+# The BLAS backend finds its library through pkg-config.
+# The GPU backends compile with the build host's hipcc or nvcc.
+BDEPEND="
+	opencl? ( ${PYTHON_DEPS} )
+	vulkan? ( media-libs/shaderc )
+	openblas? ( virtual/pkgconfig )
+	blis? ( virtual/pkgconfig )
+	flexiblas? ( virtual/pkgconfig )
+	rocm? ( >=dev-util/hipcc-7.0 )
+	cuda? ( dev-util/nvidia-cuda-toolkit )
 "
-BDEPEND="media-libs/shaderc"
+
+pkg_pretend() {
+	[[ ${MERGE_TYPE} != binary ]] && use openmp && tc-check-openmp
+}
 
 pkg_setup() {
+	[[ ${MERGE_TYPE} != binary ]] && use openmp && tc-check-openmp
+	use opencl && python-any-r1_pkg_setup
+
 	if use rocm; then
 		linux-info_pkg_setup
 		if linux-info_get_any_version && linux_config_exists; then
@@ -90,8 +113,31 @@ pkg_setup() {
 	fi
 }
 
+PATCHES=(
+	# Stock LLVM 23+ rejects __bf16 vectors for the bf16 MFMA builtins;
+	# upstream fixed the WMMA half in 9145ddb955. verified 2026-10-26
+	"${FILESDIR}"/${PN}-0.7.0_p11906-hip-bf16-mfma.patch
+)
+
 src_prepare() {
 	use cuda && cuda_src_prepare
+
+	# PR #30202 (OPEN DRAFT): the flash-attention MMA kernel dequantizes a
+	# q8_0/q4_0 KV cache on the fly instead of a separate dequant pass.
+	# Measured on the 5070 Ti: tg 101.5 vs 88.4 tok/s at 49K ctx (build 12001).
+	# Rebased on eb4e244be (2026-10-29). Live tolerates drift: a hunk that no
+	# longer applies warns instead of dying, and the build goes on without
+	# the kernel (FA_Q_MMA absent from libggml-cuda.so). Drop when the PR merges.
+	if use cuda; then
+		local fa="${FILESDIR}/${PN}-9999-cuda-fa-mma-q-dequant-pr30202.patch"
+		if patch -p1 --dry-run -f -s < "${fa}" >/dev/null 2>&1; then
+			eapply "${fa}"
+		else
+			ewarn "${fa##*/} no longer applies to this checkout; building WITHOUT the"
+			ewarn "FA q-dequant kernel. Rebase the patch (git apply --check) or pin the commit."
+		fi
+	fi
+
 	cmake_src_prepare
 	if use examples; then
 		mkdir -p "${BUILD_DIR}/tinyllamas" || die
@@ -101,26 +147,71 @@ src_prepare() {
 }
 
 src_configure() {
+	# Upstream releases build Release, which supplies -DNDEBUG; cmake.eclass
+	# blanks CMAKE_*_FLAGS_RELWITHDEBINFO, so it never lands and the plain
+	# assert() calls in ggml and llama stay live -- a configuration upstream
+	# never exercises. GGML_ASSERT is unconditional, so the ggml consistency
+	# checks survive either way. Worth ~1% of token throughput on AVX-512.
+	# USE=debug keeps the asserts for diagnosing an abort. # verified 2026-09-21
+	if ! use debug; then
+		append-cflags "-DNDEBUG"
+		append-cxxflags "-DNDEBUG"
+	fi
+
 	local mycmakeargs=(
-		-DLLAMA_BUILD_WEBUI=OFF
 		-DLLAMA_BUILD_TESTS=OFF
 		-DLLAMA_BUILD_EXAMPLES=$(usex examples)
 		-DLLAMA_BUILD_SERVER=ON
 		-DCMAKE_SKIP_BUILD_RPATH=ON
 		-DGGML_NATIVE=0	# don't set march
 		-DGGML_RPC=ON
-		-DLLAMA_CURL=$(usex curl)
+		# Otherwise RPC links libibverbs whenever the build host has it.
+		-DGGML_RPC_RDMA=OFF
+		# ggml would wrap the compiler in any ccache it finds; Portage's
+		# FEATURES=ccache decides that instead.
+		-DGGML_CCACHE=OFF
 		-DLLAMA_OPENSSL=$(usex openssl)
-		-DBUILD_NUMBER="1"
 		-DGENTOO_REMOVE_CMAKE_BLAS_HACK=ON
 		-DGGML_CUDA=$(usex cuda)
+		-DGGML_CUDA_NCCL=OFF
 		-DGGML_OPENCL=$(usex opencl)
+		# ggml accepts only Adreno and Intel GPUs, and its Adreno kernels reject
+		# every other device, so they are enabled only where Adreno exists.
+		# verified 2026-10-06
+		-DGGML_OPENCL_USE_ADRENO_KERNELS=$(usex arm64)
 		-DGGML_OPENMP=$(usex openmp)
 		-DGGML_VULKAN=$(usex vulkan)
+		-DGGML_SYCL=OFF
 
-		# avoid clashing with whisper.cpp
+		# Isolate libraries shared with whisper.cpp.
 		-DCMAKE_INSTALL_LIBDIR="${EPREFIX}/usr/$(get_libdir)/llama.cpp"
 		-DCMAKE_INSTALL_RPATH="${EPREFIX}/usr/$(get_libdir)/llama.cpp"
+	)
+
+	# USE=webui fetches upstream's prebuilt UI from Hugging Face (the
+	# checkout's build number, else "latest"). The npm build stays off:
+	# it would run only when the build host happens to have npm.
+	# A live checkout keeps git describe's version.
+	mycmakeargs+=(
+		-DLLAMA_BUILD_UI=OFF
+		-DLLAMA_USE_PREBUILT_UI=$(usex webui)
+	)
+
+	mycmakeargs+=(
+		-DGGML_SSE42=$(usex cpu_flags_x86_sse4_2)
+		-DGGML_AVX=$(usex cpu_flags_x86_avx)
+		-DGGML_AVX_VNNI=$(usex cpu_flags_x86_avx_vnni)
+		-DGGML_AVX2=$(usex cpu_flags_x86_avx2)
+		-DGGML_BMI2=$(usex cpu_flags_x86_bmi2)
+		-DGGML_F16C=$(usex cpu_flags_x86_f16c)
+		-DGGML_FMA=$(usex cpu_flags_x86_fma3)
+		-DGGML_AVX512=$(usex cpu_flags_x86_avx512f)
+		-DGGML_AVX512_VBMI=$(usex cpu_flags_x86_avx512vbmi)
+		-DGGML_AVX512_VNNI=$(usex cpu_flags_x86_avx512_vnni)
+		-DGGML_AVX512_BF16=$(usex cpu_flags_x86_avx512_bf16)
+		-DGGML_AMX_TILE=$(usex cpu_flags_x86_amx_tile)
+		-DGGML_AMX_INT8=$(usex cpu_flags_x86_amx_int8)
+		-DGGML_AMX_BF16=$(usex cpu_flags_x86_amx_bf16)
 	)
 
 	if use openblas ; then
@@ -142,8 +233,8 @@ src_configure() {
 	fi
 
 	if use cuda; then
-		local -x CUDAHOSTCXX="$(cuda_gccdir)"
-		# tries to recreate dev symlinks
+		local -x CUDAHOSTCXX="$(cuda_gccdir)/g++"
+		# nvcc recreates device symlinks during detection.
 		cuda_add_sandbox
 		addpredict "/dev/char/"
 	fi
@@ -152,17 +243,29 @@ src_configure() {
 		rocm_use_hipcc
 		mycmakeargs+=(
 			-DGGML_HIP=ON -DAMDGPU_TARGETS=$(get_amdgpu_flags)
-			-DGGML_HIP_ROCWMMA_FATTN=$(usex wmma)
 		)
+		# hipcc 10.1 hides libomp from CMake; see rocm_hipcc_openmp_args.
+		use openmp && mycmakeargs+=( $(rocm_hipcc_openmp_args) )
 	fi
 
 	cmake_src_configure
 }
 
+src_compile() {
+	cmake_src_compile
+
+	# A failed fetch only warns and builds the server without a UI. Assets
+	# placed in the checkout's tools/ui/dist (e.g. by a user patch) are
+	# embedded from there instead.
+	if use webui && [[ ! -f ${BUILD_DIR}/tools/ui/dist/index.html &&
+		! -f ${S}/tools/ui/dist/index.html ]]; then
+		die "USE=webui: the prebuilt UI could not be fetched from Hugging Face"
+	fi
+}
+
 src_install() {
 	cmake_src_install
-	dobin "${BUILD_DIR}/bin/ggml-rpc-server"
 
-	# avoid clashing with whisper.cpp
-	rm -rf "${ED}/usr/include"
+	# Both projects install conflicting ggml headers.
+	rm -r "${ED}/usr/include" || die
 }
