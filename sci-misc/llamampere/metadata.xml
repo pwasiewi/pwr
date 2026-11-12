@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription>
+    Fork of llama.cpp by JakeATX for the Qwen3.8 family: adaptive MTP
+    drafting, SJ-KVaRN and TurboQuant KV-cache types, AI+ weight files and
+    the Flash-Next mode, which keeps a ranked expert cache on the card and
+    the remaining experts in system RAM. Installed under /opt/llamampere
+    with ampere- prefixed symlinks in /usr/bin to coexist with
+    sci-misc/llama-cpp.
+  </longdescription>
+  <use>
+    <flag name="openssl">Serve and fetch over HTTPS with <pkg>dev-libs/openssl</pkg></flag>
+  </use>
+  <upstream>
+    <remote-id type="github">JakeATX/llamAmpere</remote-id>
+  </upstream>
+</pkgmetadata>

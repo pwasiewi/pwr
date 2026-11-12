@@ -1,0 +1,16 @@
+BDEPEND=cuda? ( dev-util/nvidia-cuda-toolkit ) app-alternatives/ninja >=dev-build/cmake-3.28.5
+DEFINED_PHASES=compile configure install postinst prepare pretend setup test
+DEPEND=cuda? ( dev-util/nvidia-cuda-toolkit:= ) openmp? ( llvm-runtimes/openmp:= ) openssl? ( dev-libs/openssl:= )
+DESCRIPTION=llama.cpp fork tuned for Qwen3.8 (MTP, Flash-Next expert split) on NVIDIA cards
+EAPI=8
+HOMEPAGE=https://github.com/JakeATX/llamAmpere
+INHERIT=cmake cuda flag-o-matic toolchain-funcs
+IUSE=+cuda debug +openmp +openssl cpu_flags_x86_avx cpu_flags_x86_avx2 cpu_flags_x86_avx512_bf16 cpu_flags_x86_avx512_vnni cpu_flags_x86_avx512f cpu_flags_x86_avx512vbmi cpu_flags_x86_avx_vnni cpu_flags_x86_bmi2 cpu_flags_x86_f16c cpu_flags_x86_fma3 cpu_flags_x86_sse4_2
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=cuda? ( dev-util/nvidia-cuda-toolkit:= ) openmp? ( llvm-runtimes/openmp:= ) openssl? ( dev-libs/openssl:= )
+RESTRICT=test
+SLOT=0
+SRC_URI=https://github.com/JakeATX/llamAmpere/archive/refs/tags/v0.6.4.tar.gz -> llamampere-0.6.4.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5	flag-o-matic	fd3558f73f6503093adee69adf41020d	multiprocessing	45d0620f25c2f063ad6276ecd9ed9399	ninja-utils	d063ea1900a793f93eb095010d6d9156	xdg-utils	42869b3c8d86a70ef3cf75165a395e09	cmake	3530055400d05e64deaba3042af30af6	cuda	8b660e223a1695e3884ee4c7dc2c5059
+_md5_=1ee3d82184c747eab64772d6746e7cc6
