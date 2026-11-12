@@ -7,9 +7,8 @@
 #    ResourceManager.cpp to DetectionManager.cpp) and is obsolete anyway on
 #    merged-usr profiles: the code now probes /usr/lib/udev/rules.d, exactly
 #    where udev_dorules lands via the /lib -> usr/lib merge.
-#  - Adds the Gainward RTX 5070 Ti Phoenix I2C detector (sub-device 0xF323,
-#    shared with the 5080 Phoenix; lives in PalitGPUController since 2026-09),
-#    not yet upstream — this host's GPU.
+#  - The Gainward RTX 5070 Ti Phoenix detector (sub-device 0xF323, this
+#    host's GPU) was a local patch until 2026-11-12; upstream now carries it.
 #  - Adds the ASUS ROG Swift PG34WCDN (0b05:1d38) to AsusMonitorController —
 #    this host's monitor; same HID profile as the PG32UCDM generation.
 # 2026-10-16: openrgb-9999-exit-and-concurrency-crashes.patch — two SIGSEGVs
@@ -55,7 +54,6 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}"/openrgb-9999-gainward-rtx5070ti-phoenix.patch
 	"${FILESDIR}"/openrgb-9999-asus-pg34wcdn-monitor.patch
 	"${FILESDIR}"/openrgb-9999-exit-and-concurrency-crashes.patch
 )

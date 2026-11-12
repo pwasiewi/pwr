@@ -25,8 +25,53 @@ still present on master 6a10f77c (2026-10-15).
    of the file. Cleanup hooks are a file-scope list in DetectionManager.cpp, so
    the DetectionManager class layout seen by plugins is unchanged.
 
+Rebased 2026-11-12: upstream moved AsusAuraUSBControllerDetect.cpp one level down,
+split the ROG Strix LC and Ryuo AIO detectors into their own files and added
+DetectAsusAuraUSBLiquidCoolers (AuraMainboardController), which gets the same
+hid_close() on a failed constructor.
+
+diff --git a/Controllers/AsusAuraUSBController/AsusAuraRyuoAIOController/AsusAuraRyuoAIOControllerDetect.cpp b/Controllers/AsusAuraUSBController/AsusAuraRyuoAIOController/AsusAuraRyuoAIOControllerDetect.cpp
+--- a/Controllers/AsusAuraUSBController/AsusAuraRyuoAIOController/AsusAuraRyuoAIOControllerDetect.cpp
++++ b/Controllers/AsusAuraUSBController/AsusAuraRyuoAIOController/AsusAuraRyuoAIOControllerDetect.cpp
+@@ -7,8 +7,10 @@
+ |   SPDX-License-Identifier: GPL-2.0-or-later               |
+ \*---------------------------------------------------------*/
+ 
++#include <stdexcept>
+ #include <hidapi.h>
+ #include "DetectionManager.h"
++#include "LogManager.h"
+ #include "AsusAuraRyuoAIOController.h"
+ #include "RGBController_AsusAuraRyuoAIO.h"
+ 
+@@ -32,10 +34,22 @@
+ 
+     if(dev)
+     {
+-        AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
+-        RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
+-
+-        detected_controllers.push_back(rgb_controller);
++        try
++        {
++            AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
++            RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
++
++            detected_controllers.push_back(rgb_controller);
++        }
++        catch(const std::runtime_error& ex)
++        {
++            /*---------------------------------------------*\
++            | The controller constructor threw before it    |
++            | took ownership of the handle                  |
++            \*---------------------------------------------*/
++            LOG_ERROR("[AsusAuraUSB] Ryuo AIO: %s", ex.what());
++            hid_close(dev);
++        }
+     }
+ 
+     return(detected_controllers);
 diff --git a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
-index 178bd146..7068f0bb 100644
 --- a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
 +++ b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBController.cpp
 @@ -10,10 +10,37 @@
@@ -67,7 +112,7 @@ index 178bd146..7068f0bb 100644
  AuraUSBController::AuraUSBController(hid_device* dev_handle, const char* path, std::string dev_name)
  {
      dev         = dev_handle;
-@@ -86,12 +113,11 @@ void AuraUSBController::GetConfigTable()
+@@ -86,12 +113,11 @@
      | Send packet                                           |
      \*-----------------------------------------------------*/
      hid_write(dev, usb_buf, 65);
@@ -82,7 +127,7 @@ index 178bd146..7068f0bb 100644
      {
          memcpy(config_table, &usb_buf[4], 60);
  
-@@ -110,8 +136,15 @@ void AuraUSBController::GetConfigTable()
+@@ -110,8 +136,15 @@
      }
      else
      {
@@ -99,7 +144,7 @@ index 178bd146..7068f0bb 100644
      }
  }
  
-@@ -134,12 +167,11 @@ void AuraUSBController::GetFirmwareVersion()
+@@ -134,12 +167,11 @@
      | Send packet                                           |
      \*-----------------------------------------------------*/
      hid_write(dev, usb_buf, 65);
@@ -113,11 +158,10 @@ index 178bd146..7068f0bb 100644
      {
          memcpy(version, &usb_buf[2], 16);
      }
-diff --git a/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp b/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
-index 13092579..8c854710 100644
---- a/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
-+++ b/Controllers/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
-@@ -153,10 +153,22 @@ DetectedControllers DetectAsusAuraUSBTerminal(hid_device_info* info, const std::
+diff --git a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
+--- a/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
++++ b/Controllers/AsusAuraUSBController/AsusAuraUSBController/AsusAuraUSBControllerDetect.cpp
+@@ -58,10 +58,22 @@
  
      if(dev)
      {
@@ -143,7 +187,7 @@ index 13092579..8c854710 100644
      }
  
      return(detected_controllers);
-@@ -171,11 +183,23 @@ DetectedControllers DetectAsusAuraUSBAddressable(hid_device_info* info, const st
+@@ -76,11 +88,23 @@
  
      if(dev)
      {
@@ -171,7 +215,7 @@ index 13092579..8c854710 100644
      }
  
      return(detected_controllers);
-@@ -202,6 +226,7 @@ DetectedControllers DetectAsusAuraUSBMotherboards(hid_device_info* info, const s
+@@ -107,6 +131,7 @@
          {
              // reading the config table failed
              LOG_ERROR("[AsusAuraUSB] An error occured while reading the config table: %s", ex.what());
@@ -179,18 +223,42 @@ index 13092579..8c854710 100644
          }
      }
  
-@@ -273,10 +298,22 @@ DetectedControllers DetectAsusAuraUSBROGStrixLC(hid_device_info* info, const std
+@@ -136,7 +161,7 @@
+         catch(const std::runtime_error& ex)
+         {
+             // reading the config table failed
+-            LOG_ERROR("[AsusAuraUSB] An error occured while reading the config table: %s", ex.what());
++            LOG_ERROR("[AsusAuraUSB] An error occured while reading the config table: %s", ex.what());            hid_close(dev);
+         }
+     }
+ 
+diff --git a/Controllers/AsusAuraUSBController/AsusROGStrixLCController/AsusROGStrixLCControllerDetect.cpp b/Controllers/AsusAuraUSBController/AsusROGStrixLCController/AsusROGStrixLCControllerDetect.cpp
+--- a/Controllers/AsusAuraUSBController/AsusROGStrixLCController/AsusROGStrixLCControllerDetect.cpp
++++ b/Controllers/AsusAuraUSBController/AsusROGStrixLCController/AsusROGStrixLCControllerDetect.cpp
+@@ -7,8 +7,10 @@
+ |   SPDX-License-Identifier: GPL-2.0-or-later               |
+ \*---------------------------------------------------------*/
+ 
++#include <stdexcept>
+ #include <hidapi.h>
+ #include "DetectionManager.h"
++#include "LogManager.h"
+ #include "AsusROGStrixLCController.h"
+ #include "RGBController_AsusROGStrixLC.h"
+ 
+@@ -31,10 +33,22 @@
  
      if(dev)
      {
 -        AsusROGStrixLCController*     controller     = new AsusROGStrixLCController(dev, info->path, name);
 -        RGBController_AsusROGStrixLC* rgb_controller = new RGBController_AsusROGStrixLC(controller);
+-
+-        detected_controllers.push_back(rgb_controller);
 +        try
 +        {
 +            AsusROGStrixLCController*     controller     = new AsusROGStrixLCController(dev, info->path, name);
 +            RGBController_AsusROGStrixLC* rgb_controller = new RGBController_AsusROGStrixLC(controller);
- 
--        detected_controllers.push_back(rgb_controller);
++
 +            detected_controllers.push_back(rgb_controller);
 +        }
 +        catch(const std::runtime_error& ex)
@@ -205,37 +273,10 @@ index 13092579..8c854710 100644
      }
  
      return(detected_controllers);
-@@ -291,10 +328,22 @@ DetectedControllers DetectAsusAuraUSBRyuoAIO(hid_device_info* info, const std::s
- 
-     if(dev)
-     {
--        AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
--        RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
-+        try
-+        {
-+            AsusAuraRyuoAIOController*     controller     = new AsusAuraRyuoAIOController(dev, info->path, name);
-+            RGBController_AsusAuraRyuoAIO* rgb_controller = new RGBController_AsusAuraRyuoAIO(controller);
- 
--        detected_controllers.push_back(rgb_controller);
-+            detected_controllers.push_back(rgb_controller);
-+        }
-+        catch(const std::runtime_error& ex)
-+        {
-+            /*---------------------------------------------*\
-+            | The controller constructor threw before it    |
-+            | took ownership of the handle                  |
-+            \*---------------------------------------------*/
-+            LOG_ERROR("[AsusAuraUSB] Ryuo AIO: %s", ex.what());
-+            hid_close(dev);
-+        }
-     }
- 
-     return(detected_controllers);
 diff --git a/Controllers/LogitechController/LogitechControllerDetect.cpp b/Controllers/LogitechController/LogitechControllerDetect.cpp
-index 5528ddc4..8d68ed3f 100644
 --- a/Controllers/LogitechController/LogitechControllerDetect.cpp
 +++ b/Controllers/LogitechController/LogitechControllerDetect.cpp
-@@ -848,7 +848,10 @@ public:
+@@ -848,7 +848,10 @@
      }
  };
  
@@ -247,7 +288,7 @@ index 5528ddc4..8d68ed3f 100644
  
  static bool HIDPP20BuildForWatcher(const std::string& node_path, uint8_t index);
  
-@@ -857,6 +860,16 @@ static void HIDPP20RegisterHook()
+@@ -857,6 +860,16 @@
      if(!hidpp20_hook_registered)
      {
          DetectionManager::get()->RegisterPreDetectionHook(HIDPP20PreDetectionReset);
@@ -264,7 +305,7 @@ index 5528ddc4..8d68ed3f 100644
          LogitechHIDPP20ReceiverWatcher::SetBuilder(HIDPP20BuildForWatcher);
          hidpp20_hook_registered = true;
      }
-@@ -1794,3 +1807,15 @@ REGISTER_HID_DETECTOR_IP ("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_
+@@ -1794,3 +1807,15 @@
  REGISTER_HID_DETECTOR_BPU("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_USB,       0xFFA0, 1);
  REGISTER_HID_DETECTOR_BP ("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_BLUETOOTH, 0xFF43);
  REGISTER_HID_DETECTOR_BPU("Logitech HID++ 2.0", DetectLogitechHIDPP20, LOGITECH_VID, HID_PID_ANY, HID_API_BUS_BLUETOOTH, 0xFF00, 2);
@@ -281,10 +322,9 @@ index 5528ddc4..8d68ed3f 100644
 +\*---------------------------------------------------------*/
 +static HIDPP20WatcherShutdown hidpp20_watcher_shutdown;
 diff --git a/DetectionManager.cpp b/DetectionManager.cpp
-index b076f621..e16d3aad 100644
 --- a/DetectionManager.cpp
 +++ b/DetectionManager.cpp
-@@ -224,10 +224,45 @@ std::vector<i2c_smbus_interface*>& DetectionManager::GetI2CBuses()
+@@ -226,10 +226,45 @@
      return(i2c_buses);
  }
  
@@ -331,18 +371,17 @@ index b076f621..e16d3aad 100644
      ProcessCleanup();
  }
 diff --git a/DetectionManager.h b/DetectionManager.h
-index 90a6b0e9..00db9309 100644
 --- a/DetectionManager.h
 +++ b/DetectionManager.h
-@@ -58,6 +58,7 @@ typedef std::function<DetectedControllers(hid_device_info*, const std::string&)>
- typedef std::function<DetectedControllers(hidapi_wrapper wrapper, hid_device_info*, const std::string&)>            HIDWrappedDeviceDetectorFunction;
+@@ -60,6 +60,7 @@
+ typedef std::function<DetectedControllers(SerialDeviceInfo*, const std::string&)>                             USBSerialDeviceDetectorFunction;
  typedef std::function<void()>                                                                                       DynamicDetectorFunction;
  typedef std::function<void()>                                                                                       PreDetectionHookFunction;
 +typedef std::function<void()>                                                                                       CleanupHookFunction;
  
  /*---------------------------------------------------------*\
  | Detector Block Types                                      |
-@@ -189,6 +190,15 @@ public:
+@@ -201,6 +202,15 @@
      \*-----------------------------------------------------*/
      void                                RegisterPreDetectionHook(PreDetectionHookFunction hook);
  
