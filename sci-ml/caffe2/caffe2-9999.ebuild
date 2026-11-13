@@ -167,6 +167,12 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-9999-unbundle_pocketfft.patch.xz
 	"${FILESDIR}"/${PN}-2.5.1-cudnn_include_fix.patch.xz
 	"${FILESDIR}"/${PN}-2.4.0-cpp-httplib.patch.xz
+	# cpp-httplib 0.60 replaced httplib::Params (a std::multimap) with an
+	# insertion-ordered container; WorkerServer.cpp returned req.params by
+	# const std::multimap reference and stopped compiling (2026-11-13).
+	# Copies the params into a std::multimap member; builds with older
+	# cpp-httplib too. Drop once upstream adapts.
+	"${FILESDIR}"/${PN}-9999-cpp-httplib-0.60-params.patch.xz
 	"${FILESDIR}"/${PN}-2.7.0-glog-0.7.1.patch.xz
 	"${FILESDIR}"/${PN}-2.12.0-aotriton-fixes.patch.xz
 	"${FILESDIR}"/${PN}-2.8.0-rocm-minus-flash.patch.xz
